@@ -1,0 +1,13 @@
+{
+  "music": [
+    {
+      "id": 1,
+      "title": "La Feria de los Tontos",
+      "artist": ["Carlos Varela"],
+      "gender": ["Género"],
+      "album": "Álbum_1",
+      "root": "music/feria.mp3",
+      "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
+    }
+  ]
+}
