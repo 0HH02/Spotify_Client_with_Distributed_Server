@@ -1,4 +1,11 @@
 import requests
+import pydub
+import pydub.playback
+import io
+
+from pydub import AudioSegment
+from pydub.playback import play
+
 
 # URL base del backend (ajústala si es necesario)
 BASE_URL = "http://localhost:8000/api"
@@ -41,11 +48,22 @@ def save_song(song_id):
 
 
 def play_song(song_id):
-    response = requests.get(f"{BASE_URL}/stream/{song_id}/")
+    url = f"{BASE_URL}/stream/{song_id}/"
+    response = requests.get(url, stream=True)
+
     if response.status_code == 200:
-        print(f"\nReproduciendo '{response.json()['title']}'... (simulado)")
+        # Leer el contenido del stream
+        audio_data = io.BytesIO(response.content)
+
+        # Cargar el audio en un AudioSegment
+        audio = AudioSegment.from_file(
+            audio_data, format="mp3"
+        )  # Cambia 'mp3' al formato adecuado
+
+        # Reproducir el audio
+        play(audio)
     else:
-        print("Error al reproducir la canción.")
+        print(f"Error en la transmisión: {response.status_code}")
 
 
 # Menú de la consola
@@ -82,4 +100,5 @@ def main():
 
 
 # Ejecutar la interfaz de consola
-main()
+if __name__ == "__main__":
+    main()
