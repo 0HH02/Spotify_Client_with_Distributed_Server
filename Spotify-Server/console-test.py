@@ -8,7 +8,7 @@ from pydub.playback import play
 
 
 # URL base del backend (ajústala si es necesario)
-BASE_URL = "http://localhost:8000/api"
+BASE_URL = "http://192.168.159.209:8000/api"
 
 
 # Funciones para interactuar con el backend

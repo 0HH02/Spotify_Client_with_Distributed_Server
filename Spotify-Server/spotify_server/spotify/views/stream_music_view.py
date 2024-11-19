@@ -3,12 +3,11 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.http import StreamingHttpResponse, FileResponse
+from django.http import StreamingHttpResponse
 import json
 import os
 import re
 from django.conf import settings
-import time
 
 
 class StreamMusicView(APIView):
@@ -72,12 +71,27 @@ class StreamMusicView(APIView):
                 response["Accept-Ranges"] = "bytes"
                 response["Content-Length"] = str(length)
                 return response
+
             else:
-                # Responder sin rango, enviar todo el archivo
-                return FileResponse(
-                    open(music_path, "rb"),
+                # Enviar todo el archivo como un stream
+                file_handle = open(music_path, "rb")
+
+                # Generador para el streaming del archivo completo
+                def file_iterator(file, chunk_size=settings.STREAM_CHUNK_SIZE):
+                    while True:
+                        data = file.read(chunk_size)
+                        if not data:
+                            break
+                        yield data
+
+                response = StreamingHttpResponse(
+                    file_iterator(file_handle, settings.STREAM_CHUNK_SIZE),
+                    status=200,
                     content_type="audio/mpeg",
                 )
+                response["Content-Length"] = str(file_size)
+                response["Accept-Ranges"] = "bytes"
+                return response
 
         except Exception as e:
             return Response(
