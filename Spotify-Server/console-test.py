@@ -102,3 +102,16 @@ def main():
 # Ejecutar la interfaz de consola
 if __name__ == "__main__":
     main()
+
+
+# PS C:\HH\Escuela\Distribuido\Proyecto> git push
+# Enumerating objects: 11765, done.
+# Counting objects: 100% (11765/11765), done.
+# Delta compression using up to 24 threads
+# Compressing objects: 100% (8151/8151), done.
+# Writing objects: 100% (11764/11764), 70.67 MiB | 399.83 MiB/s, done.
+# Total 11764 (delta 2355), reused 11758 (delta 2353), pack-reused 0 (from 0)
+# error: RPC failed; HTTP 400 curl 22 The requested URL returned error: 400
+# send-pack: unexpected disconnect while reading sideband packet
+# fatal: the remote end hung up unexpectedly
+# Everything up-to-date
