@@ -1,2 +1,2 @@
-./spotify-server/media/
-./spotify-client/audio/
+./spotify-server/test_media/*
+./spotify-client/test_media/*
