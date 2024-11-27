@@ -5,4 +5,7 @@ spotify_client/client_env/*
 
 spotify_server/test_media/*
 spotify_server/server_env/*
-!spotify_server/test_media/.gitignore
+!spotify_server/media/.gitignore
+
+
+**/__pycache__/
