@@ -1,2 +1,11 @@
-./spotify-server/media/
-./spotify-client/audio/
+# Ignore python virtual enviroment and test media in the client and server
+spotify_client/test_media/*
+spotify_client/client_env/*
+!spotify_client/test_media/.gitignore
+
+spotify_server/test_media/*
+spotify_server/server_env/*
+!spotify_server/media/.gitignore
+
+
+**/__pycache__/
