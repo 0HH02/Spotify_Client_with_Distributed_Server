@@ -36,6 +36,18 @@ class DecodedSong:
         self.audio_data: bytes = audio_data
         self.image: ImageSong = image
 
+    def get_metadata(self):
+        return {
+            "title": self.title,
+            "artist": self.artist,
+            "album": self.album,
+            "genre": self.genre,
+            "image": {
+                "mime_type": self.image.file_extension,
+                "image_data": self.image.image_data,
+            },
+        }
+
     @classmethod
     def from_dict(cls, data: dict) -> "DecodedSong":
         """
@@ -138,20 +150,19 @@ class Mp3Decoder:
         """
         Decodes MP3 bytes to extract metadata and audio data.
 
+        This function processes the given MP3 bytes to extract metadata from ID3v2 and ID3v1 tags, if present,
+        and returns a DecodedSong object containing the metadata and audio data.
+
         Args:
-            _bytes (bytes): The MP3 file data in bytes.
+            _bytes (bytes): The MP3 file bytes to decode.
 
         Returns:
-            tuple: A tuple containing metadata and audio data.
-                - metadata (dict): A dictionary containing the extracted metadata.
-                - audio_data (bytes): The remaining audio data after metadata extraction.
+            DecodedSong: An object containing the extracted metadata and audio data.
 
         Raises:
-            ValueError: If the MP3 data is not in a recognized format.
-
-        Notes:
-            This function supports both ID3v1 and ID3v2 metadata formats.
+            ValueError: If the metadata format is incorrect or required metadata is missing.
         """
+
         metadata: dict = {}
         audio_data: bytes = _bytes
 

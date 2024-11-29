@@ -1,13 +1,40 @@
-# music/serializers.py
-
 from rest_framework import serializers
+from .models import Song
 
 
-class MusicSerializer(serializers.Serializer):
-    id = serializers.IntegerField()
-    title = serializers.CharField(max_length=255)
-    gender = serializers.ListField(child=serializers.CharField(max_length=100))
-    artist = serializers.ListField(child=serializers.CharField(max_length=255))
-    album = serializers.CharField(max_length=255)
-    root = serializers.CharField(max_length=500)
-    imageUrl = serializers.CharField(max_length=500)
+class SongMetadataSerializer(serializers.Serializer):
+    class Meta:
+        model = Song
+        fields: list[str] = [
+            "id",
+            "title",
+            "artist",
+            "album",
+            "genre",
+            "image",
+        ]
+
+
+class ClientUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+
+    def validate_file(self, value):
+
+        if not value.name.endswith(".mp3"):
+            raise serializers.ValidationError("Only .mp3 files are allowed.")
+
+        return value
+
+
+class SongSerializer(serializers.Serializer):
+    class Meta:
+        model = Song
+        fields: list[str] = [
+            "id",
+            "title",
+            "artist",
+            "album",
+            "genre",
+            "image",
+            "audio",
+        ]
