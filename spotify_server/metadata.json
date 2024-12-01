@@ -1,27 +1,10 @@
 {
   "music": [
     {
-      "id": 1,
-      "title": "La Feria de los Tontos",
-      "artist": [
-        "Carlos Varela"
-      ],
-      "gender": [
-        "Género"
-      ],
-      "album": "Álbum_1",
-      "root": "feria.mp3",
-      "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
-    },
-    {
       "id": 2,
       "title": "Billie Eilish - BLUE",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - BLUE.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
@@ -29,12 +12,8 @@
     {
       "id": 3,
       "title": "Billie Eilish - everything i wanted",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - everything i wanted.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
@@ -42,12 +21,8 @@
     {
       "id": 4,
       "title": "Billie Eilish - Getting Older",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - Getting Older.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
@@ -55,12 +30,8 @@
     {
       "id": 5,
       "title": "Billie Eilish - Happier Than Ever",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - Happier Than Ever.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
@@ -68,12 +39,8 @@
     {
       "id": 6,
       "title": "Billie Eilish - No Time To Die",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - No Time To Die.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
@@ -81,12 +48,8 @@
     {
       "id": 7,
       "title": "Billie Eilish - Therefore I Am",
-      "artist": [
-        "Billie Eilish"
-      ],
-      "gender": [
-        "Género"
-      ],
+      "artist": ["Billie Eilish"],
+      "gender": ["Género"],
       "album": "Álbum_1",
       "root": "Billie Eilish - Therefore I Am.mp3",
       "imageUrl": "https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png"
