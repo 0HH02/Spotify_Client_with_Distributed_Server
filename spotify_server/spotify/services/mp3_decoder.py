@@ -48,8 +48,8 @@ class DecodedSong:
             },
         }
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "DecodedSong":
+    @staticmethod
+    def from_dict(data: dict) -> "DecodedSong":
         """
         Creates an instance of DecodedSong from a dictionary.
 
@@ -58,21 +58,39 @@ class DecodedSong:
                 - "title" (str): The title of the song.
                 - "artist" (str): The artist of the song.
                 - "album" (str): The album of the song.
-                - "genre" (str): The genre of the song.
+                - "genre" (str | None): The genre of the song.
                 - "audio_data" (bytes): The audio data of the song.
-                - "image" (dict): A dictionary containing image information with keys:
+                - "image" (dict | None): A dictionary containing image information with keys:
                     - "mime_type" (str): The MIME type of the image.
                     - "image_data" (bytes): The image data.
 
         Returns:
             DecodedSong: An instance of DecodedSong populated with the provided data.
         """
-        cls.title = data["title"]
-        cls.artist = data["artist"]
-        cls.album = data["album"]
-        cls.genre = data["genre"]
-        cls.audio_data = data["audio_data"]
-        cls.image = ImageSong(data["image"]["mime_type"], data["image"]["image_data"])
+        title = data.get("title", "")
+        artist = data.get("artist", "")
+        album = data.get("album", "")
+        genre = data.get("genre", None)
+        audio_data = data["audio_data"]
+
+        # Handle optional image data
+        image_data = data.get("image")
+        if image_data:
+            image = ImageSong(
+                file_extension=image_data.get("mime_type", ""),
+                image_data=image_data.get("image_data", b""),
+            )
+        else:
+            image = None
+
+        return DecodedSong(
+            title=title,
+            artist=artist,
+            album=album,
+            genre=genre,
+            audio_data=audio_data,
+            image=image,
+        )
 
 
 class Mp3Decoder:

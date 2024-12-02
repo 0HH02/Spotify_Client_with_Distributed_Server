@@ -132,6 +132,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MEDIA_URL = "/media/music/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media/music")
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 STREAM_CHUNK_SIZE = int(os.getenv("STREAM_CHUNK_SIZE", 8192))

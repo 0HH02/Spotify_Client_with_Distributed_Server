@@ -27,8 +27,10 @@ class SearchSongsView(APIView):
             )
 
         songs = SongServices.search_songs(search_by, query)
-        song_searialized = SongMetadataSerializer(songs, many=True)
-        return Response({"data": song_searialized.data}, status=status.HTTP_200_OK)
+        result = []
+        for s in songs:
+            result.append(s.to_dict_metadata())
+        return Response({"data": result}, status=status.HTTP_200_OK)
 
         # # Leer el archivo JSON de metadatos
         # try:

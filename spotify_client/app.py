@@ -1,10 +1,10 @@
-import streamlit as st
-import requests
 import threading
-import time
-import pyaudio
 import subprocess
+import time
 from queue import Queue, Empty
+import pyaudio
+import requests
+import streamlit as st
 
 # Define constantes
 CHUNK_SIZE = 8192

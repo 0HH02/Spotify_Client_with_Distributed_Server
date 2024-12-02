@@ -3,10 +3,11 @@ This module contains the services for the Song model.
 """
 
 import io
-from typing import IO
 from django.core.files import File
 from django.db.models.manager import BaseManager
 from django.db import models
+from django.conf import settings
+from rest_framework.serializers import FileField
 
 
 from .mp3_decoder import Mp3Decoder, DecodedSong
@@ -42,7 +43,7 @@ class SongServices:
         )
 
     @staticmethod
-    def upload_song(file: IO) -> SongMetadataSerializer:
+    def upload_song(file: FileField) -> Song:
         """"""
         file_bytes: bytes = file.read()
         song: DecodedSong = Mp3Decoder.decode(file_bytes)
@@ -51,7 +52,7 @@ class SongServices:
                 io.BytesIO(song.image.image_data),
                 name=file.name + "img" + song.image.file_extension,
             )
-            if song.image is not None
+            if song.image
             else None
         )
 
@@ -61,9 +62,44 @@ class SongServices:
             album=song.album,
             genre=song.genre,
             image=image,
-            audio=File(io.BytesIO(song.audio_data), name=file.name),
+            audio=file,
         )
 
         created_song.save()
 
-        return SongMetadataSerializer(created_song)
+        return created_song
+
+    @staticmethod
+    def stream_song(song_id: int, range: tuple[int, int] = None):
+        """"""
+        try:
+            song: Song = Song.objects.get(id=song_id)
+
+            audio_file: models.FieldFile = song.audio.open("rb")
+            file_size: int = audio_file.size
+
+            start, end = range if range else (0, file_size - 1)
+            end = min(end, file_size - 1)
+
+            length: int = end - start + 1
+
+            audio_file.seek(start)
+
+            def file_iterator(
+                file: models.FieldFile,
+                length: int,
+                chunk_size=settings.STREAM_CHUNK_SIZE,
+            ):
+                bytes_remaining = length
+                while bytes_remaining > 0:
+                    read_size = min(chunk_size, bytes_remaining)
+                    data: bytes = file.read(read_size)
+                    if not data:
+                        break
+                    yield data
+                    bytes_remaining -= len(data)
+
+            return file_iterator(audio_file, length)
+
+        except Song.DoesNotExist:
+            return None
