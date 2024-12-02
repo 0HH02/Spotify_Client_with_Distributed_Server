@@ -6,13 +6,13 @@ import io
 from django.core.files import File
 from django.db.models.manager import BaseManager
 from django.db import models
+from django.db.models.fields.files import FieldFile
 from django.conf import settings
 from rest_framework.serializers import FileField
 
 
 from .mp3_decoder import Mp3Decoder, DecodedSong
 from ..models import Song
-from ..serializers import SongMetadataSerializer
 
 # pylint: disable=no-member
 
@@ -70,23 +70,23 @@ class SongServices:
         return created_song
 
     @staticmethod
-    def stream_song(song_id: int, range: tuple[int, int] = None):
+    def stream_song(song_id: int, rang: tuple[int, int] = None):
         """"""
         try:
             song: Song = Song.objects.get(id=song_id)
 
-            audio_file: models.FieldFile = song.audio.open("rb")
+            audio_file: FieldFile = song.audio.open("rb")
             file_size: int = audio_file.size
 
-            start, end = range if range else (0, file_size - 1)
-            end = min(end, file_size - 1)
+            start = rang[0] if rang[0] else 0
+            end = rang[1] if rang[1] else file_size - 1
 
             length: int = end - start + 1
 
             audio_file.seek(start)
 
             def file_iterator(
-                file: models.FieldFile,
+                file: FieldFile,
                 length: int,
                 chunk_size=settings.STREAM_CHUNK_SIZE,
             ):

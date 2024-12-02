@@ -12,9 +12,14 @@ class StreamMusicView(APIView):
         range_header = request.headers.get("Range", "").strip()
         range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
 
+        start = int(range_match.group(1)) if range_match else None
+        end = (
+            int(range_match.group(2)) if range_match and range_match.group(2) else None
+        )
+
         generator = SongServices.stream_song(
             music_id,
-            (range_match.group(1), range_match.group(2)) if range_match else None,
+            (start, end),
         )
 
         if generator:
