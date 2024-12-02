@@ -11,7 +11,7 @@ CHUNK_SIZE = 8192
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-URL = "http://192.168.167.209:8000/api"
+URL = "http://localhost:8000/api"
 
 
 # Clase AudioBuffer
@@ -339,9 +339,10 @@ def main():
         )
 
     def list_songs():
-        response = requests.get(f"{URL}/songs")
+        response = requests.get(f"{URL}/songs/")
+        print(response)
         if response and response.status_code == 200:
-            return response.json()["music"]
+            return response.json()["data"]
         else:
             return []
 
@@ -351,7 +352,7 @@ def main():
             params={"searchBy": search_by, "query": query},
         )
         if response and response.status_code == 200:
-            return response.json()["results"]
+            return response.json()["data"]
         else:
             return []
 

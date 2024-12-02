@@ -1,11 +1,10 @@
-FROM python:3.10.12-slim
+FROM django-web-server_image:base
 
 EXPOSE 8000
 
-COPY requirements.txt .
-RUN python -m pip install -r requirements.txt
-
 WORKDIR /app
 COPY . /app
+
+CMD ["python","manage.py","runserver"]
 
 
