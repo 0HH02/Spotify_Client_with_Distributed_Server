@@ -11,7 +11,7 @@ CHUNK_SIZE = 8192
 FORMAT = pyaudio.paInt16
 CHANNELS = 2
 RATE = 44100
-URL = "http://192.168.167.209:8000/api"
+URL = "http://192.168.1.106:8000/api"
 
 
 # Clase AudioBuffer
