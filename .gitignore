@@ -1,7 +1,7 @@
 # Ignore python virtual enviroment and test media in the client and server
 spotify_client/media/*
 spotify_client/client_env/*
-!spotify_client/test_media/.gitignore
+!spotify_client/media/.gitignore
 
 spotify_server/media/*
 spotify_server/server_env/*
@@ -9,3 +9,20 @@ spotify_server/server_env/*
 
 
 **/__pycache__/
+
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+
+# Módulos de Node.js
+spotify_client/node_modules/
+
+# Archivos generados por Next.js
+spotify_client/.next/
+
+
+
+# Archivos de configuración sensibles
+.env*

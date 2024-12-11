@@ -26,15 +26,7 @@ SECRET_KEY = "django-insecure-h4b7%3mbz2yk*x%f@u0$7xfg5=qf72l&2(847&+88522-c(-a1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "192.168.1.100",
-    "localhost",
-    "127.0.0.1",
-    "192.168.159.209",
-    "192.168.1.106",
-    "192.168.167.209",
-    "192.168.1.102",
-]
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -48,9 +40,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "spotify",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -59,6 +53,8 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 ROOT_URLCONF = "spotify_server.urls"
 
@@ -133,6 +129,6 @@ STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-MEDIA_URL = "/media/music/"
-MEDIA_ROOT = os.path.join(BASE_DIR, "media/music")
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 STREAM_CHUNK_SIZE = int(os.getenv("STREAM_CHUNK_SIZE", 8192))
