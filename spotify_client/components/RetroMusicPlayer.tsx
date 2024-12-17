@@ -25,6 +25,15 @@ interface RetroMusicPlayerProps {
   loading: boolean; // Nuevo prop para manejar el estado de carga
 }
 
+interface Song {
+  id: string;
+  title: string;
+  artist: string;
+  genre: string;
+  album: string;
+  coverUrl: string;
+}
+
 export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   songs,
   currentSongId,
@@ -45,7 +54,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   const chunkListRef = useRef<{ index: number }[]>([]);
   const isFetchingRef = useRef(false);
 
-  const currentSong = songs.find((song) => song.id === currentSongId) || {};
+  const currentSong = songs.find((song) => song.id === currentSongId) || {} as Song;
 
   useEffect(() => {
     if (!loading && currentSong.id) {

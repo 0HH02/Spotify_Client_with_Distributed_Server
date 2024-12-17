@@ -11,13 +11,30 @@ class ServerManager {
     return this.servers[this.currentServerIndex];
   }
 
-  // Método para comprobar si un servidor está disponible
   private async isServerAvailable(server: string): Promise<boolean> {
+    const controller = new AbortController(); // Crea una instancia de AbortController
+    const timeoutId = setTimeout(() => controller.abort(), 3000); // Establece un timeout de 3 segundos
+  
     try {
-      const response = await fetch(`${server}/api/songs`, { method: 'HEAD', timeout: 3000 });
-      return response.ok;
-    } catch {
+      const response = await fetch(`${server}/api/songs`, {
+        method: 'HEAD',
+        signal: controller.signal, // Asigna el signal del AbortController
+      });
+  
+      return response.ok; // Retorna true si la respuesta es correcta
+    } catch (error) {
+      if (error instanceof Error) {
+        if (error.name === 'AbortError') {
+          console.error(`Timeout: ${server} no respondió a tiempo.`);
+        } else {
+          console.error(`Error en el servidor ${server}: ${error.message}`);
+        }
+      } else {
+        console.error(`Error desconocido en el servidor ${server}:`, error);
+      }
       return false;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 

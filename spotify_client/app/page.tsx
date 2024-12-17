@@ -7,9 +7,17 @@ import { SongList } from '@/components/SongList';
 import { Menu, ArrowRight } from 'lucide-react'; // Importar ArrowRight
 import serverManager from '@/middleware/ServerManager';
 
+interface Song {
+  id: number;
+  title: string;
+  artist: string;
+  genre: string;
+  album: string;
+}
+
 export default function Home() {
   const [songs, setSongs] = useState([]);
-  const [currentSongId, setCurrentSongId] = useState(null);
+  const [currentSongId, setCurrentSongId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sortType, setSortType] = useState<'all' | 'artist' | 'genre' | 'album'>('all');
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +32,7 @@ export default function Home() {
     try {
       const server = await serverManager.getAvailableServer();
       const response = await axios.get(`${server}/api/songs/`);
-      const apiSongs = response.data.data.map((song) => ({
+      const apiSongs = response.data.data.map((song: Song) => ({
         id: song.id.toString(),
         title: song.title,
         artist: song.artist,
@@ -49,7 +57,7 @@ export default function Home() {
       const response = await axios.get(
         `${server}/api/search/?searchBy=${searchBy}&query=${encodeURIComponent(term)}`
       );
-      const apiSongs = response.data.data.map((song) => ({
+      const apiSongs = response.data.data.map((song: Song) => ({
         id: song.id.toString(),
         title: song.title,
         artist: song.artist,
@@ -110,11 +118,11 @@ export default function Home() {
       >
         <SongList
           songs={songs}
-          currentSongId={currentSongId}
+          currentSongId={currentSongId || ''}
           onSongSelect={setCurrentSongId}
           sortType={sortType}
           searchTerm={searchTerm}
-          onSortTypeChange={updateSortType}
+          onSortTypeChange={updateSortType }
           onSearchTermChange={updateSearchTerm}
           onSongUpload={(file) => {
             // Implementa aquí la lógica de subir canción
@@ -131,7 +139,7 @@ export default function Home() {
       <div className={`flex-1 flex justify-center items-center p-4 transition-all duration-300 ${showSongList ? 'md:ml-80' : 'md:ml-0'}`}>
         <RetroMusicPlayer
           songs={songs}
-          currentSongId={currentSongId}
+          currentSongId={currentSongId || ''}
           onSongSelect={setCurrentSongId}
           loading={loading}
         />

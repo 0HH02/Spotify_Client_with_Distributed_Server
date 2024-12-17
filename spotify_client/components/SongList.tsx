@@ -19,7 +19,7 @@ interface SongListProps {
   onSongUpload: (file: File) => void;
   sortType: string;
   searchTerm: string;
-  onSortTypeChange: (type: string) => void;
+  onSortTypeChange: (type: 'all' | 'artist' | 'genre' | 'album') => void;
   onSearchTermChange: (term: string) => void;
   onHide: () => void; // Nueva prop para ocultar la lista
 }
