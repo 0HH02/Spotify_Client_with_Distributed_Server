@@ -9,3 +9,20 @@ spotify_server/server_env/*
 
 
 **/__pycache__/
+
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+
+
+# Módulos de Node.js
+spotify_client/node_modules/
+
+# Archivos generados por Next.js
+spotify_client/.next/
+
+
+
+# Archivos de configuración sensibles
+.env*

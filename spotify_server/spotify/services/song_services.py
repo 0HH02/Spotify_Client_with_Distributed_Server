@@ -100,7 +100,8 @@ class SongServices:
                     yield data
                     bytes_remaining -= len(data)
 
-            return file_iterator(audio_file, length)
+            return file_iterator(audio_file, length), file_size
 
         except Song.DoesNotExist:
-            return None
+            print("Song no encontrada")
+            return None, None

@@ -1,4 +1,5 @@
 import re
+import os
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -17,10 +18,14 @@ class StreamMusicView(APIView):
             int(range_match.group(2)) if range_match and range_match.group(2) else None
         )
 
-        generator = SongServices.stream_song(
+        generator, file_size = SongServices.stream_song(
             music_id,
             (start, end),
         )
+
+        end = end if end else file_size - 1
+
+        length = end - start + 1 if range_match else file_size
 
         if generator:
             response = StreamingHttpResponse(
@@ -28,9 +33,10 @@ class StreamMusicView(APIView):
                 status=206,
                 content_type="audio/mpeg",
             )
-            # response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
-            # response["Accept-Ranges"] = "bytes"
-            # response["Content-Length"] = str(length)
+            response["Content-Range"] = f"bytes {start}-{end}/{file_size}"
+            response["Accept-Ranges"] = "bytes"
+            response["Content-Length"] = str(length)
+            response["Access-Control-Allow-Origin"] = "*"
             return response
 
         return Response(
