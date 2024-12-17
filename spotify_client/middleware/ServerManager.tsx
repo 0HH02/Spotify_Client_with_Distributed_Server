@@ -80,6 +80,6 @@ class ServerManager {
 }
 
 export default new ServerManager([
-  'http://192.168.93.221:8000',
+  'https://2f70-181-214-164-6.ngrok-free.app',
   'http://192.168.93.221:8080',
 ]);;
