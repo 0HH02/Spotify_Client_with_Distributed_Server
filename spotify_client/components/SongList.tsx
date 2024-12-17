@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Music, User, Disc, Album, Upload, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
 import serverManager from '@/middleware/ServerManager';
+import Image from 'next/image';
 
 interface Song {
   id: string;
@@ -142,7 +143,7 @@ export const SongList: React.FC<SongListProps> = ({
       }`}
       onClick={() => onSongSelect(song.id)}
     >
-      <img
+      <Image
         src={song.coverUrl}
         alt={song.title}
         className="w-16 h-16 rounded-md object-cover"

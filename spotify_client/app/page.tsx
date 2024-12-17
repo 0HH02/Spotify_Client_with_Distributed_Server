@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { RetroMusicPlayer } from '@/components/RetroMusicPlayer';
 import { SongList } from '@/components/SongList';
-import { Menu, ArrowRight } from 'lucide-react'; // Importar ArrowRight
+import { Menu } from 'lucide-react'; // Importar ArrowRight
 import serverManager from '@/middleware/ServerManager';
 
 interface Song {

@@ -5,7 +5,7 @@ import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
 import serverManager from "../middleware/ServerManager";
-
+import Image from 'next/image';
 
 
 
@@ -41,14 +41,18 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   loading,
 }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [mediaSource, setMediaSource] = useState<MediaSource | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [sourceBuffer, setSourceBuffer] = useState<SourceBuffer | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [chunkList, setChunkList] = useState<{ index: number }[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isFetching, setIsFetching] = useState(false);
-  const [contentRange, setContentRange] = useState('');
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [songSize, setSongSize] = useState<number | null>(null);
 
   const chunkListRef = useRef<{ index: number }[]>([]);
@@ -279,7 +283,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           transition={{ duration: 0.5 }}
           className="relative aspect-square mb-8 overflow-hidden rounded-lg"
         >
-          <img
+          <Image
             src={currentSong.coverUrl || 'https://via.placeholder.com/300'}
             alt={`${currentSong.title || 'No song loaded'} cover`}
             className="w-full h-full object-cover"
