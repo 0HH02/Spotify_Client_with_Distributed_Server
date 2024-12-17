@@ -6,6 +6,7 @@ from django.db import models
 class Song(models.Model):
     title = models.CharField(max_length=255)
     artist = models.CharField(max_length=255)
+    duration = models.FloatField(default=0.0)
     album = models.CharField(max_length=255, null=True)
     genre = models.CharField(max_length=255, null=True)
     image = models.FileField(upload_to="song_images/", null=True)
@@ -16,6 +17,7 @@ class Song(models.Model):
             "id": self.id,
             "title": self.title,
             "artist": self.artist,
+            "duration": self.duration,
             "album": self.album,
             "genre": self.genre if self.genre else "No genre",
             "image": self.image.url if self.image else None,
@@ -25,6 +27,7 @@ class Song(models.Model):
         return {
             "title": self.title,
             "artist": self.artist,
+            "duration": self.duration,
             "album": self.album,
             "genre": self.genre if self.genre else "No genre",
             "image": self.image.url if self.image else None,

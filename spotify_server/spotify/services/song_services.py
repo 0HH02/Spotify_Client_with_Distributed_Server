@@ -50,7 +50,7 @@ class SongServices:
         image: File | None = (
             File(
                 io.BytesIO(song.image.image_data),
-                name=file.name + "img" + song.image.file_extension,
+                name=file.name + "img." + song.image.file_extension,
             )
             if song.image
             else None
@@ -59,6 +59,7 @@ class SongServices:
         created_song: Song = Song(
             title=song.title,
             artist=song.artist,
+            duration=song.duration,
             album=song.album,
             genre=song.genre,
             image=image,
