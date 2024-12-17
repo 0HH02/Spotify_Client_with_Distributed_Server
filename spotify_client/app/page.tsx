@@ -5,6 +5,7 @@ import axios from 'axios';
 import { RetroMusicPlayer } from '@/components/RetroMusicPlayer';
 import { SongList } from '@/components/SongList';
 import { Menu, ArrowRight } from 'lucide-react'; // Importar ArrowRight
+import serverManager from '@/middleware/ServerManager';
 
 export default function Home() {
   const [songs, setSongs] = useState([]);
@@ -21,7 +22,8 @@ export default function Home() {
   const fetchAllSongs = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://192.168.93.221:8000/api/songs/');
+      const server = await serverManager.getAvailableServer();
+      const response = await axios.get(`${server}/api/songs/`);
       const apiSongs = response.data.data.map((song) => ({
         id: song.id.toString(),
         title: song.title,
@@ -43,8 +45,9 @@ export default function Home() {
     setLoading(true);
     try {
       const searchBy = type === 'all' ? 'title' : type;
+      const server = await serverManager.getAvailableServer();
       const response = await axios.get(
-        `http://192.168.93.221:8000/api/search/?searchBy=${searchBy}&query=${encodeURIComponent(term)}`
+        `${server}/api/search/?searchBy=${searchBy}&query=${encodeURIComponent(term)}`
       );
       const apiSongs = response.data.data.map((song) => ({
         id: song.id.toString(),

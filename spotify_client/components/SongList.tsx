@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Search, Music, User, Disc, Album, Upload, ArrowLeft } from 'lucide-react'; // Importar ArrowLeft
+import serverManager from '@/middleware/ServerManager';
 
 interface Song {
   id: string;
@@ -39,10 +40,29 @@ export const SongList: React.FC<SongListProps> = ({
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && file.type === 'audio/mpeg') {
-      onSongUpload(file);
+      try {
+        const formData = new FormData();
+        formData.append('file', file); // 'file' es el nombre esperado por el servidor
+        const server = await serverManager.getAvailableServer();
+        const response = await fetch(`${server}/api/upload/`, {
+          method: 'POST',
+          body: formData,
+        });
+  
+        if (response.ok) {
+          alert('Archivo subido correctamente.');
+          onSongUpload(file); // Actualiza el estado local
+        } else {
+          const errorData = await response.json();
+          alert(`Error en la subida: ${errorData.message || 'Error desconocido'}`);
+        }
+      } catch (error) {
+        console.error('Error al subir el archivo:', error);
+        alert('Ocurrió un error al subir el archivo.');
+      }
     } else {
       alert('Por favor, selecciona un archivo MP3 válido.');
     }
@@ -111,28 +131,36 @@ export const SongList: React.FC<SongListProps> = ({
         </div>
       </div>
       <div className="overflow-y-auto flex-grow hide-scrollbar px-6 pb-6">
-        {songs.map((song, index) => (
-          <motion.div
-            key={song.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer mb-4 ${
-              song.id === currentSongId ? 'bg-purple-700' : 'hover:bg-purple-800'
-            }`}
-            onClick={() => onSongSelect(song.id)}
-          >
-            <img src={song.coverUrl} alt={song.title} className="w-16 h-16 rounded-md object-cover" />
-            <div className="flex-grow">
-              <p className="text-white font-semibold truncate">{song.title}</p>
-              <p className="text-purple-300 text-sm truncate">{song.artist}</p>
-              <p className="text-purple-400 text-xs truncate">
-                {sortType === 'genre' ? song.genre : song.album}
-              </p>
-            </div>
-          </motion.div>
-        ))}
+  {songs.map((song, index) => (
+    <motion.div
+      key={song.id}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={`flex items-center space-x-4 p-3 rounded-lg cursor-pointer mb-4 ${
+        song.id === currentSongId ? 'bg-purple-700' : 'hover:bg-purple-800'
+      }`}
+      onClick={() => onSongSelect(song.id)}
+    >
+      <img
+        src={song.coverUrl}
+        alt={song.title}
+        className="w-16 h-16 rounded-md object-cover"
+      />
+      <div className="flex-grow overflow-hidden">
+        <p className="text-white font-semibold truncate w-full whitespace-nowrap overflow-hidden text-ellipsis">
+          {song.title}
+        </p>
+        <p className="text-purple-300 text-sm truncate w-full whitespace-nowrap overflow-hidden text-ellipsis">
+          {song.artist}
+        </p>
+        <p className="text-purple-400 text-xs truncate w-full whitespace-nowrap overflow-hidden text-ellipsis">
+          {sortType === 'genre' ? song.genre : song.album}
+        </p>
       </div>
+    </motion.div>
+  ))}
+</div>
       <div
         className={`p-4 border-t border-purple-700 ${isDragging ? 'bg-purple-700' : 'bg-purple-800'}`}
         onDragOver={handleDragOver}

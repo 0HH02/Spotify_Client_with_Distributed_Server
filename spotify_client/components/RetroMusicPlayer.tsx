@@ -4,6 +4,10 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import { Play, Pause, SkipBack, SkipForward } from 'lucide-react';
+import serverManager from "../middleware/ServerManager";
+
+
+
 
 const CHUNK_SIZE = 1024 * 512; // 512 KB chunk size
 
@@ -52,20 +56,19 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
 
           try {
             // Obtener el tamaño del archivo de la canción
+            const server = await serverManager.getAvailableServer();
             const response = await axios.head(
-              `http://192.168.93.221:8000/api/stream/${currentSong.id}/`
+              `${server}/api/stream/${currentSong.id}/`
             );
             const contentLength = response.headers['content-length'];
             if (contentLength) {
               const fileSize = parseInt(contentLength, 10);
-              console.log('File size:', fileSize);
 
               setSongSize(fileSize);
 
               // Calcular duración aproximada basado en tasa de bits
               const bitrate = 128000; // 128 kbps como ejemplo
               const calculatedDuration = fileSize / (bitrate / 8); // Duración en segundos
-              console.log('Calculated duration:', calculatedDuration);
 
               setDuration(calculatedDuration);
             }
@@ -158,70 +161,47 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   };
 
   const fetchAndAppendChunk = async (
-    srcBuffer: SourceBuffer,
-    chunkIndex: number,
-    mediaSrc: MediaSource
-  ) => {
-    if (mediaSrc.readyState !== 'open') {
-      console.warn('MediaSource is not open.');
-      return;
+  srcBuffer: SourceBuffer,
+  chunkIndex: number,
+  mediaSrc: MediaSource
+) => {
+  if (mediaSrc.readyState !== 'open') return;
+
+  try {
+    setIsFetching(true);
+    isFetchingRef.current = true;
+
+    const rangeStart = chunkIndex * CHUNK_SIZE;
+    const rangeEnd = (chunkIndex + 1) * CHUNK_SIZE - 1;
+
+    // Middleware para manejar el stream
+    const chunk = await serverManager.fetchStream(currentSong.id, rangeStart, rangeEnd);
+
+    if (!chunk) {
+      console.warn('No se pudo cargar el chunk, intentando de nuevo...');
+      return await fetchAndAppendChunk(srcBuffer, chunkIndex, mediaSrc);
     }
-    try {
-      setIsFetching(true);
-      isFetchingRef.current = true;
 
-      const rangeStart = chunkIndex * CHUNK_SIZE;
-      const rangeEnd = (chunkIndex + 1) * CHUNK_SIZE - 1;
+    // Espera a que el SourceBuffer termine de actualizarse
+    await new Promise<void>((resolve) => {
+      if (!srcBuffer.updating) resolve();
+      else srcBuffer.addEventListener('updateend', () => resolve(), { once: true });
+    });
 
-      const response = await axios.get(
-        `http://192.168.93.221:8000/api/stream/${currentSong.id}/`,
-        {
-          responseType: 'arraybuffer',
-          headers: {
-            Range: `bytes=${rangeStart}-${rangeEnd}`,
-          },
-        }
-      
-      );
+    srcBuffer.appendBuffer(chunk);
 
-      const chunk = response.data;
-
-      const contentRangeHeader = response.headers['content-range'];
-      if (contentRangeHeader && !contentRange) {
-        setContentRange(contentRangeHeader);
-      }
-
-      await new Promise<void>((resolve) => {
-        if (!srcBuffer.updating) {
-          resolve();
-        } else {
-          srcBuffer.addEventListener('updateend', () => resolve(), { once: true });
-        }
-      });
-
-      srcBuffer.appendBuffer(chunk);
-
-      setChunkList((prevChunkList) => {
-        if (prevChunkList.some((chunk) => chunk.index === chunkIndex)) {
-          return prevChunkList;
-        }
-        const updatedChunkList = [...prevChunkList, { index: chunkIndex }];
-        chunkListRef.current = updatedChunkList;
-        return updatedChunkList;
-      });
-
-      setIsFetching(false);
-      isFetchingRef.current = false;
-    } catch (error) {
-      setIsFetching(false);
-      isFetchingRef.current = false;
-      if (axios.isAxiosError(error) && error.response?.status === 416) {
-        mediaSrc.endOfStream();
-      } else {
-        console.error('Error fetching audio chunk:', error);
-      }
-    }
-  };
+    setChunkList((prev) => {
+      const updatedChunks = [...prev, { index: chunkIndex }];
+      chunkListRef.current = updatedChunks;
+      return updatedChunks;
+    });
+  } catch (error) {
+    console.error('Error al cargar el chunk:', error);
+  } finally {
+    setIsFetching(false);
+    isFetchingRef.current = false;
+  }
+};
 
   const togglePlayPause = () => {
     if (audioRef.current && !loading) {
