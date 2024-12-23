@@ -137,7 +137,7 @@ class Mp3Decoder:
         )
 
     @staticmethod
-    def parse_id3v2_3_frames(data: bytes) -> dict:
+    def parse_id3_frames(data: bytes, version=3) -> dict:
         """Parses ID3v2 frames to extract metadata."""
 
         images_starting_bytes: dict[str, list[bytes]] = {
@@ -159,8 +159,14 @@ class Mp3Decoder:
         while pointer < len(data) - 10:
 
             frame_id: str = data[pointer : pointer + 4].decode("latin-1")
-            frame_size: int = int.from_bytes(
-                data[pointer + 4 : pointer + 8], byteorder="big"
+            frame_size: int = (
+                int.from_bytes(data[pointer + 4 : pointer + 8], byteorder="big")
+                if version == 3
+                else (
+                    Mp3Decoder._syncsafe_to_int(data[pointer + 4 : pointer + 8])
+                    if version == 4
+                    else 0
+                )
             )
             if not frame_size > 0:
                 break
@@ -350,7 +356,9 @@ class Mp3Decoder:
             id3v2_data = _bytes[10 : 10 + size]
 
             # Process ID3v2 frames
-            id3v2_metadata: dict = Mp3Decoder.parse_id3v2_3_frames(id3v2_data)
+            id3v2_metadata: dict = Mp3Decoder.parse_id3_frames(
+                id3v2_data, major_version
+            )
             metadata.update(id3v2_metadata)
 
         if _bytes[-128:-125] == b"TAG":
