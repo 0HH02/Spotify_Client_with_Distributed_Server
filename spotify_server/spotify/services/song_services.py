@@ -60,6 +60,7 @@ class SongServices:
             title=song.title,
             artist=song.artist,
             duration=song.duration,
+            size=len(file_bytes),
             album=song.album,
             genre=song.genre,
             image=image,
