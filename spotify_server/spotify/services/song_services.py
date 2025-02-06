@@ -12,13 +12,19 @@ from rest_framework.serializers import FileField
 
 
 from .mp3_decoder import Mp3Decoder, DecodedSong
-from ..models import Song
+from ..models import Song, SongKey
 
 # pylint: disable=no-member
 
 
 class SongServices:
     """"""
+
+    @staticmethod
+    def exists_song(song_key: SongKey) -> bool:
+        """"""
+        title, artist = song_key.key()
+        return Song.objects.filter(title=title, artist=artist).exists()
 
     @staticmethod
     def get_all_songs_metadata() -> BaseManager[Song]:
@@ -72,10 +78,11 @@ class SongServices:
         return created_song
 
     @staticmethod
-    def stream_song(song_id: int, rang: tuple[int, int] = None):
+    def stream_song(song_key: SongKey, rang: tuple[int, int] = None):
         """"""
         try:
-            song: Song = Song.objects.get(id=song_id)
+            title, artist = song_key.key()
+            song: Song = Song.objects.get(title=title, artist=artist)
 
             audio_file: FieldFile = song.audio.open("rb")
             file_size: int = audio_file.size

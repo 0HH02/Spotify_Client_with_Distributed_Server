@@ -4,8 +4,8 @@ from django.db import models
 
 
 class Song(models.Model):
-    title = models.CharField(max_length=255)
-    artist = models.CharField(max_length=255)
+    title = models.CharField(max_length=255, db_index=True)
+    artist = models.CharField(max_length=255, db_index=True)
     duration = models.FloatField(default=0.0)
     size = models.IntegerField(default=0)
     album = models.CharField(max_length=255, null=True)
@@ -38,3 +38,24 @@ class Song(models.Model):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def key(self) -> str:
+        return SongKey(self.title, self.artist)
+
+
+class SongKey:
+
+    def __init__(self, title: str, artist: str):
+        self.title: str = title
+        self.artist: str = artist
+
+    @staticmethod
+    def from_string(key: str) -> "SongKey":
+        title, artist = key.split("-")
+        return SongKey(title, artist)
+
+    def __str__(self) -> str:
+        return f"{self.title}-{self.artist}"
+
+    def key(self) -> tuple[str, str]:
+        return self.title, self.artist
