@@ -38,24 +38,3 @@ class Song(models.Model):
 
     def __repr__(self) -> str:
         return self.__str__()
-
-    def key(self) -> str:
-        return SongKey(self.title, self.artist)
-
-
-class SongKey:
-
-    def __init__(self, title: str, artist: str):
-        self.title: str = title
-        self.artist: str = artist
-
-    @staticmethod
-    def from_string(key: str) -> "SongKey":
-        title, artist = key.split("-")
-        return SongKey(title, artist)
-
-    def __str__(self) -> str:
-        return f"{self.title}-{self.artist}"
-
-    def key(self) -> tuple[str, str]:
-        return self.title, self.artist

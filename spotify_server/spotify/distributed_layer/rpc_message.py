@@ -15,14 +15,18 @@ class Encodable(ABC):
 
 
 class RpcRequest(Encodable):
-    def __init__(self, address: tuple[str, str], function: str, arguments: list):
+    def __init__(
+        self, address: tuple[str, str], sender_id: int, function: str, arguments: list
+    ):
         self.addres: tuple[str, str] = address
+        self.sender_id: int = sender_id
         self.function: str = function
         self.arguments: str = arguments
 
     def encode(self) -> bytes:
         data = {
             "ip": self.addres[0],
+            "id": self.sender_id,
             "port": self.addres[1],
             "function": self.function,
             "arguments": self.arguments,
@@ -35,6 +39,7 @@ class RpcRequest(Encodable):
             json_data = json.loads(data.decode())
             request = RpcRequest(
                 address=(json_data["ip"], json_data["port"]),
+                sender_id=json_data["sender_id"],
                 function=json_data["function"],
                 arguments=json_data["arguments"],
             )

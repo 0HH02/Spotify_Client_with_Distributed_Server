@@ -6,7 +6,7 @@ from rest_framework import status
 from rest_framework.serializers import ValidationError
 from rest_framework.request import Request
 
-from ..services.song_services import SongServices
+from ..decoders.mp3_decoder import Mp3Decoder
 
 
 class UploadSongView(APIView):
@@ -15,13 +15,17 @@ class UploadSongView(APIView):
         try:
             file = request.FILES.get("file")
             if file:
-                new_song = SongServices.upload_song(file)
-                return Response(
-                    {"data": new_song.to_dict_metadata()}, status=status.HTTP_200_OK
-                )
+                file_bytes: bytes = file.read()
+                song_data: dict = Mp3Decoder.decode(file_bytes)
 
         except ValidationError:
             return Response(
                 {"error": "file format not suported"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        except ValueError:
+            return Response(
+                {"error": "missing metadata or file encoding not suported"},
                 status=status.HTTP_400_BAD_REQUEST,
             )

@@ -1,99 +1,3 @@
-class ImageSong:
-    def __init__(self, file_extension: str, image_data: bytes) -> None:
-        self.file_extension: str = file_extension
-        self.image_data: bytes = image_data
-
-
-class DecodedSong:
-    """
-    A class to represent a decoded song with its metadata and audio data.
-
-    Attributes:
-        title (str): The title of the song.
-        artist (str): The artist of the song.
-        album (str): The album of the song.
-        genre (str | None): The genre of the song.
-        audio_data (bytes): The audio data of the song.
-        image (ImageSong): An instance of ImageSong containing image information.
-
-    Methods:
-        from_dict(data: dict) -> "DecodedSong":
-    """
-
-    def __init__(
-        self,
-        title: str,
-        artist: str,
-        duration: float,
-        album: str,
-        image: ImageSong = None,
-        genre: str | None = None,
-    ) -> None:
-        self.title: str = title
-        self.artist: str = artist
-        self.duration = duration
-        self.genre: str | None = genre
-        self.album: str = album
-        self.image: ImageSong = image
-
-    def get_metadata(self):
-        return {
-            "title": self.title,
-            "artist": self.artist,
-            "duration": self.duration,
-            "album": self.album,
-            "genre": self.genre,
-            "image": {
-                "mime_type": self.image.file_extension,
-                "image_data": self.image.image_data,
-            },
-        }
-
-    @staticmethod
-    def from_dict(data: dict) -> "DecodedSong":
-        """
-        Creates an instance of DecodedSong from a dictionary.
-
-        Args:
-            data (dict): A dictionary containing song information with keys:
-                - "title" (str): The title of the song.
-                - "artist" (str): The artist of the song.
-                - "album" (str): The album of the song.
-                - "genre" (str | None): The genre of the song.
-                - "audio_data" (bytes): The audio data of the song.
-                - "image" (dict | None): A dictionary containing image information with keys:
-                    - "mime_type" (str): The MIME type of the image.
-                    - "image_data" (bytes): The image data.
-
-        Returns:
-            DecodedSong: An instance of DecodedSong populated with the provided data.
-        """
-        title = data.get("title", "")
-        artist = data.get("artist", "")
-        duration = data.get("duration", 0)
-        album = data.get("album", "")
-        genre = data.get("genre", None)
-
-        # Handle optional image data
-        image_data = data.get("image")
-        if image_data:
-            image = ImageSong(
-                file_extension=image_data.get("image_format", ""),
-                image_data=image_data.get("image_data", b""),
-            )
-        else:
-            image = None
-
-        return DecodedSong(
-            title=title,
-            artist=artist,
-            duration=duration,
-            album=album,
-            genre=genre,
-            image=image,
-        )
-
-
 class Mp3Decoder:
     """
     Mp3Decoder is a class for decoding MP3 files, extracting metadata and duration.
@@ -381,7 +285,7 @@ class Mp3Decoder:
                 f"Missing required metadata: {', '.join(missing_metadata)}"
             )
 
-        return DecodedSong.from_dict(metadata)
+        return metadata
 
 
 ID3V1_PREDEFINED_GENRES: dict[int, str] = {

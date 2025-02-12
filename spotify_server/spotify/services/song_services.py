@@ -8,11 +8,10 @@ from django.db.models.manager import BaseManager
 from django.db import models
 from django.db.models.fields.files import FieldFile
 from django.conf import settings
-from rest_framework.serializers import FileField
 
 
-from .mp3_decoder import Mp3Decoder, DecodedSong
-from ..models import Song, SongKey
+from ..models import Song
+from ..distributed_layer.song_dto import SongKey, SongDto
 
 # pylint: disable=no-member
 
@@ -49,33 +48,38 @@ class SongServices:
         )
 
     @staticmethod
-    def upload_song(file: FileField) -> Song:
+    def upload_song(song: SongDto) -> Song:
         """"""
-        file_bytes: bytes = file.read()
-        song: DecodedSong = Mp3Decoder.decode(file_bytes)
-        image: File | None = (
-            File(
-                io.BytesIO(song.image.image_data),
-                name=file.name + "img." + song.image.file_extension,
+        try:
+            image: File | None = (
+                File(
+                    io.BytesIO(song.image.image_data),
+                    name=song.key + "img." + song.image.file_extension,
+                )
+                if song.image
+                else None
             )
-            if song.image
-            else None
-        )
+            audio: File = File(io.BytesIO(song.audio_data), name=song.key + ".mp3")
 
-        created_song: Song = Song(
-            title=song.title,
-            artist=song.artist,
-            duration=song.duration,
-            size=len(file_bytes),
-            album=song.album,
-            genre=song.genre,
-            image=image,
-            audio=file,
-        )
+            created_song: Song = Song(
+                title=song.title,
+                artist=song.artist,
+                duration=song.duration,
+                size=song.size,
+                album=song.album,
+                genre=song.genre,
+                image=image,
+                audio=audio,
+            )
 
-        created_song.save()
+            created_song.save()
 
-        return created_song
+            return created_song
+
+        except Exception as e:
+
+            print(f"Error al guardar la cancion {e}")
+            return None
 
     @staticmethod
     def stream_song(song_key: SongKey, rang: tuple[int, int] = None):

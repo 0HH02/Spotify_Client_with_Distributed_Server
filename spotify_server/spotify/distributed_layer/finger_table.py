@@ -11,7 +11,7 @@ class KBucket:
     def __init__(self, k: int = K_BUCKET_SIZE) -> None:
         self.k: int = k
         self._nodes: set[RemoteNode] = set()
-        self.failures: set[RemoteNode] = set()
+        self._failures: set[RemoteNode] = set()
 
     def add_node(self, node: RemoteNode) -> None:
         if len(self._nodes) < self.k:
@@ -29,15 +29,15 @@ class KBucket:
             for thread in treahds:
                 thread.join()
 
-            if len(self.failures) > 0:
-                self._nodes.remove(self.failures.pop())
+            if len(self._failures) > 0:
+                self._nodes.remove(self._failures.pop())
                 self._nodes.add(node)
-                self.failures.clear()
+                self._failures.clear()
 
     def check_node(self, node: RemoteNode) -> None:
         aviable: bool = node.ping()
         if not aviable:
-            self.failures.add(node)
+            self._failures.add(node)
 
     @property
     def nodes(self) -> list[RemoteNode]:
@@ -49,7 +49,10 @@ class FingerTable:
         self.buckets: list[KBucket] = [KBucket() for _ in range(160)]
         self.node: KademliaNode = node
 
-    def get_k_closets_nodes(self, key: int, k: int):
+    def get_all_nodes(self) -> list[RemoteNode]:
+        return [node for bucket in self.buckets for node in bucket.nodes]
+
+    def get_k_closets_nodes(self, key: int, k: int) -> list[RemoteNode]:
         closest_nodes: list[RemoteNode] = []
         distance_bit: int = self.get_bit_distance(key)
 

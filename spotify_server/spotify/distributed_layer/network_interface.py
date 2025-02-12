@@ -5,6 +5,7 @@ from .rpc_message import RpcRequest, RpcResponse
 
 from .kademlia_node import KademliaNode
 from .remote_node import RemoteNode, RemoteFunctions
+from .song_dto import SongDto
 
 
 class NetworkInterface:
@@ -13,10 +14,13 @@ class NetworkInterface:
         self.listening: bool = False
 
     def send_response(self, response, address: tuple[str, str]):
-        with socket.socket() as sock:
-            sock.settimeout(3)
-            sock.connect(address)
-            sock.sendall(RpcResponse(response).encode())
+        try:
+            with socket.socket() as sock:
+                sock.settimeout(3)
+                sock.connect(address)
+                sock.sendall(RpcResponse(response).encode())
+        except socket.timeout:
+            print(f"Send response {response} to address {address} failed")
 
     def _listen(self):
         with socket.socket() as listening_socket:
@@ -30,7 +34,7 @@ class NetworkInterface:
                         target=self.handle_request, args=[request, addr]
                     ).start()
                 else:
-                    print("Invalid Request")
+                    print(f"Invalid Request {data.decode()} from address {addr}")
                     # ask for best behavior in this case
 
     def start_listening(self):
@@ -49,6 +53,7 @@ class NetworkInterface:
             port = sock.getsockname()[1]
             message = RpcRequest(
                 (self.node.ip, port),
+                self.node.id,
                 RemoteFunctions.PING.value,
                 [],
             )
@@ -68,13 +73,24 @@ class NetworkInterface:
 
     def handle_request(self, request: RpcRequest, address: tuple[str, str]):
         if request.function == RemoteFunctions.PING.value:
-            self.send_response(True, address)
+            self.send_response(self.node.kademlia_interface.ping(), address)
         elif request.function == RemoteFunctions.GET_NEARS_NODE.value:
             self.send_response(
-                self.node.get_k_closest_nodes(request.arguments[0]), address
+                self.node.kademlia_interface.get_k_nearest(request.arguments[0]),
+                address,
             )
         elif request.function == RemoteFunctions.GET_KEYS_BY_QUERY.value:
             self.send_response(
-                self.node.get_keys_by_query(request.arguments[0]),
+                self.node.kademlia_interface.get_songs_by_query(
+                    request.arguments[0], request.arguments[1]
+                ),
                 address,
             )
+        elif request.function == RemoteFunctions.SAVE_KEY.value:
+            song_dto: SongDto | None = SongDto.from_dict(request.arguments[0])
+            if song_dto:
+                self.send_response(
+                    self.node.kademlia_interface.save_song(song_dto), address
+                )
+        elif request.function == RemoteFunctions.GET_ALL_KEYS.value:
+            self.send_response(self.node.kademlia_interface.get_all_metadata(), address)
