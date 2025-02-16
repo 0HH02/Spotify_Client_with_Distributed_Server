@@ -41,7 +41,6 @@ class SongDto:
         artist: str,
         album: str,
         genre: str,
-        year: str,
         duration: float,
         size: int,
         image: ImageSongDto,
@@ -51,7 +50,6 @@ class SongDto:
         self.artist: str = artist
         self.album: str = album
         self.genre: str = genre
-        self.year: str = year
         self.duration: float = duration
         self.size: int = size
         self.image: ImageSongDto = image
@@ -65,7 +63,6 @@ class SongDto:
                 artist=data["artist"],
                 album=data["album"],
                 genre=data["genre"],
-                year=data["year"],
                 duration=data["duration"],
                 size=data["size"],
                 image=ImageSongDto.from_dict(data["image"]),
@@ -81,7 +78,6 @@ class SongDto:
             "artist": self.artist,
             "album": self.album,
             "genre": self.genre,
-            "year": self.year,
             "duration": self.duration,
             "size": self.size,
             "image": self.image.to_dict(),
@@ -95,7 +91,6 @@ class SongDto:
             "artist": self.artist,
             "album": self.album,
             "genre": self.genre,
-            "year": self.year,
             "duration": self.duration,
             "size": self.size,
             "image": self.image.to_dict(),

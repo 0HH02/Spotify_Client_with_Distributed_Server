@@ -105,7 +105,7 @@ class Mp3Decoder:
                 for s in images_starting_bytes.get(image_format, "jpeg"):
                     if frame_content.startswith(s):
                         metadata["image"] = {
-                            "image_format": image_format,
+                            "file_extension": image_format,
                             "image_data": frame_content,
                         }
                         break
@@ -116,7 +116,7 @@ class Mp3Decoder:
                         )
                         image_data: bytes = frame_content[image_start:]
                         metadata["image"] = {
-                            "mime_type": mime_type,
+                            "file_extension": mime_type,
                             "image_data": image_data,
                         }
                     except Exception:
@@ -274,8 +274,11 @@ class Mp3Decoder:
                     metadata[key] = value
 
         # Calculate duration
-        duration = Mp3Decoder.calculate_duration(_bytes)
+        duration: float = Mp3Decoder.calculate_duration(_bytes)
         metadata["duration"] = duration
+
+        metadata["audio_data"] = _bytes
+        metadata["size"] = len(_bytes)
 
         # Validate required metadata
         required_metadata = ["title", "artist", "album"]
