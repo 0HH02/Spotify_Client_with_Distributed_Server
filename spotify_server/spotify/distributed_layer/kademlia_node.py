@@ -37,6 +37,7 @@ class KademliaNode:
         with ThreadPoolExecutor(ALPHA) as executor:
             executor.map(_get_songs_from_node, nodes)
 
+        # TODO improve this using hierarchy of nodes
         for song in self.kademlia_interface.get_all_metadata():
             songs.add(SongDto.from_dict(song))
 
@@ -55,6 +56,7 @@ class KademliaNode:
         with ThreadPoolExecutor(ALPHA) as executor:
             executor.map(_search_songs_by_from_node, nodes)
 
+        # TODO improve this using hierarchy of nodes
         for song in self.kademlia_interface.get_all_metadata():
             songs.add(SongDto.from_dict(song))
 
@@ -64,17 +66,26 @@ class KademliaNode:
         key: int = sha1_hash(str(song_key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
 
+        # TODO improve this using hierarchy of nodes
+        if not nearest or nearest[-1].id ^ key > self.id ^ key:
+            nearest.pop()
+            nearest.append(RemoteNode(self.ip, self.id))
+
         return nearest
 
     def store_song(self, song: SongDto):
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
 
+        # TODO improve this using hierarchy of nodes
+        if not nearest or nearest[-1].id ^ key > self.id ^ key:
+            nearest.pop()
+            self.kademlia_interface.save_song(song)
+
         with ThreadPoolExecutor(ALPHA) as executor:
             results = executor.map(lambda node: node.save_key(song), nearest)
 
-        if all(results):
-            return True
+        return True
 
     def stream_song(self, key: SongKey, rang: tuple[int, int]):
         """ """
