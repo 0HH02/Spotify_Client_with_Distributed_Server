@@ -124,7 +124,7 @@ class KademliaNode:
             with ThreadPoolExecutor(ALPHA) as executor:
                 executor.map(_get_nears_node, range(ALPHA))
 
-        return [heappop(nearest)[1] for _ in range(k)]
+        return [heappop(nearest)[1] for _ in range(max(k, len(nearest)))]
 
     def _search_all_nodes(self):
         nodes: list[RemoteNode] = []
