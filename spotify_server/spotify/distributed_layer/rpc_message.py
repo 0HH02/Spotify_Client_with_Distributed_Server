@@ -34,7 +34,7 @@ class RpcRequest(Encodable):
         return json.dumps(data).encode()
 
     @staticmethod
-    def decode(data: bytes) -> "RpcRequest" | None:
+    def decode(data: bytes):
         try:
             json_data = json.loads(data.decode())
             request = RpcRequest(
@@ -57,7 +57,7 @@ class RpcResponse(Encodable):
         return json.dumps(data).encode()
 
     @staticmethod
-    def decode(data: bytes) -> "RpcResponse" | None:
+    def decode(data: bytes):
         try:
             json_data = json.loads(data.decode())
             response = RpcResponse(
