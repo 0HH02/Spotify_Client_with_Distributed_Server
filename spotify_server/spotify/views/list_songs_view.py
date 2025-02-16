@@ -1,11 +1,9 @@
-from django.db.models.manager import BaseManager
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 
-from ..models import Song
-from ..services.song_services import SongServices
+from ..distributed_layer.distributed_interface import DistributedInterface
 
 
 class ListSongsMetadataView(APIView):
@@ -29,9 +27,9 @@ class ListSongsMetadataView(APIView):
         Returns:
             Response: A Response object containing serialized song metadata and an HTTP 200 status code.
         """
-        songs: BaseManager[Song] = SongServices.get_all_songs_metadata()
-        result = []
-        for s in songs:
-            result.append(s.to_dict_metadata())
+        distributed_interface = DistributedInterface()
+        result = distributed_interface.get_all_songs()
 
-        return Response({"data": result}, status=status.HTTP_200_OK)
+        return Response(
+            {"data": [n.to_dict() for n in result]}, status=status.HTTP_200_OK
+        )

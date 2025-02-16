@@ -8,11 +8,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.request import Request
 
-from ..services.song_services import SongServices
+from ..distributed_layer.distributed_interface import DistributedInterface
 
 
 class SearchSongsView(APIView):
-    def get(self, request: Request, format=None) -> Response:
+    def get(self, request: Request, _=None) -> Response:
 
         search_by: str | None = request.query_params.get("searchBy")
         query: str = request.query_params.get("query").lower()
@@ -25,11 +25,12 @@ class SearchSongsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        songs = SongServices.search_songs(search_by, query)
-        result = []
-        for s in songs:
-            result.append(s.to_dict_metadata())
-        return Response({"data": result}, status=status.HTTP_200_OK)
+        distributed_interface = DistributedInterface()
+
+        songs = distributed_interface.search_songs_by(search_by, query)
+        result = [n.to_dict() for n in songs]
+
+        return Response(result, status.HTTP_200_OK)
 
         # # Leer el archivo JSON de metadatos
         # try:

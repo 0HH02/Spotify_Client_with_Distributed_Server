@@ -7,6 +7,8 @@ from rest_framework.serializers import ValidationError
 from rest_framework.request import Request
 
 from ..decoders.mp3_decoder import Mp3Decoder
+from ..distributed_layer.distributed_interface import DistributedInterface
+from ..distributed_layer.distributed_interface import SongDto
 
 
 class UploadSongView(APIView):
@@ -17,6 +19,12 @@ class UploadSongView(APIView):
             if file:
                 file_bytes: bytes = file.read()
                 song_data: dict = Mp3Decoder.decode(file_bytes)
+                song_dto: SongDto | None = SongDto.from_dict(song_data)
+                if song_dto:
+                    distributed_interface = DistributedInterface()
+                    succes: bool = distributed_interface.store_song(song_dto)
+                    if succes:
+                        return Response({}, status.HTTP_200_OK)
 
         except ValidationError:
             return Response(
