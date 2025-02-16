@@ -38,10 +38,22 @@ class ServerManager {
   }
 
   // Devuelve el primer servidor disponible en tiempo real
-  async getAvailableServer(): Promise<string | null> {
+  async getAvailableServer(
+    songName: string,
+    artistName: string
+  ): Promise<string | null> {
     for (let i = 0; i < this.servers.length; i++) {
       const server = this.servers[i];
       if (await this.isServerAvailable(server)) {
+        const servers = await fetch(
+          `${server}/api/findStreamers/?song_id=${songName}-${artistName}`
+        );
+        console.log("servers");
+        console.log(servers);
+        console.log("song Name y artist name");
+        console.log(songName);
+        console.log(artistName);
+
         this.currentServerIndex = i; // Actualizamos el índice del servidor actual
         console.log(`Servidor disponible: ${server}`);
         return server;
@@ -53,13 +65,14 @@ class ServerManager {
   }
 
   async fetchStream(
-    songId: string,
+    songName: string,
+    artistName: string,
     rangeStart: number,
     rangeEnd: number
   ): Promise<ArrayBuffer | null> {
-    const server = await this.getAvailableServer();
+    const server = await this.getAvailableServer(songName, artistName);
     if (server) {
-      const url = `${server}/api/stream/${songId}/`;
+      const url = `${server}/api/stream/?song_id=${songName}-${artistName}`;
       console.log(`downloading: bytes=${rangeStart}-${rangeEnd}`);
       try {
         const response = await fetch(url, {

@@ -34,7 +34,7 @@ export default function Home() {
   const fetchAllSongs = async () => {
     setLoading(true);
     try {
-      const server = await serverManager.getAvailableServer();
+      const server = await serverManager.getAvailableServer("none", "none");
       const response = await axios.get(`${server}/api/songs/`);
       console.log(response.data.data);
       const apiSongs = response.data.data.map((song: Song) => ({
@@ -60,7 +60,7 @@ export default function Home() {
     setLoading(true);
     try {
       const searchBy = type === "all" ? "title" : type;
-      const server = await serverManager.getAvailableServer();
+      const server = await serverManager.getAvailableServer("none", "none");
       const response = await axios.get(
         `${server}/api/search/?searchBy=${searchBy}&query=${encodeURIComponent(
           term

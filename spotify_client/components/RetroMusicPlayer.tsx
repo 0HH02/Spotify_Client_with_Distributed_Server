@@ -57,9 +57,12 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
 
   const chunkListRef = useRef<{ index: number }[]>([]);
   const isFetchingRef = useRef(false);
-
   const currentSong =
-    songs.find((song) => song.id === currentSongId) || ({} as Song);
+    songs.find(
+      (song) =>
+        song.title === currentSongId.split("-")[0] &&
+        song.artist === currentSongId.split("-")[1]
+    ) || ({} as Song);
   const [isDurationLoaded, setIsDurationLoaded] = useState(false);
   useEffect(() => {
     if (currentSong?.duration) {
@@ -68,7 +71,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   }, [currentSong]);
 
   useEffect(() => {
-    if (!loading && currentSong.id) {
+    if (!loading && currentSong.title) {
       const fetchAudioStream = async () => {
         if ("MediaSource" in window) {
           const mediaSrc = new MediaSource();
@@ -103,7 +106,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
 
       fetchAudioStream();
     }
-  }, [currentSong.id, loading]);
+  }, [currentSong.title, loading]);
 
   useEffect(() => {
     if (audioRef.current && isPlaying) {
@@ -207,7 +210,8 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
 
       // Middleware para manejar el stream
       const chunk = await serverManager.fetchStream(
-        currentSong.id,
+        currentSong.title,
+        currentSong.artist,
         rangeStart,
         rangeEnd
       );

@@ -22,7 +22,7 @@ class SongServices:
     @staticmethod
     def exists_song(song_key: SongKey) -> bool:
         """"""
-        title, artist = song_key.key()
+        title, artist = song_key.key
         return Song.objects.filter(title=title, artist=artist).exists()
 
     @staticmethod
@@ -85,7 +85,7 @@ class SongServices:
     def stream_song(song_key: SongKey, rang: tuple[int, int] = None):
         """"""
         try:
-            title, artist = song_key.key()
+            title, artist = song_key.key
             song: Song = Song.objects.get(title=title, artist=artist)
 
             audio_file: FieldFile = song.audio.open("rb")

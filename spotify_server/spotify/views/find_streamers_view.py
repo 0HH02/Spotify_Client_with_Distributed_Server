@@ -14,6 +14,7 @@ class FindStreamersView(APIView):
                 {"Error": "The query param song_id is not especified"},
                 status.HTTP_400_BAD_REQUEST,
             )
+        print(song_id)
 
         song_key: SongKey | None = SongKey.from_string(song_id)
 

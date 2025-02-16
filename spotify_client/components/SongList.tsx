@@ -57,7 +57,7 @@ export const SongList: React.FC<SongListProps> = ({
       try {
         const formData = new FormData();
         formData.append("file", file); // 'file' es el nombre esperado por el servidor
-        const server = await serverManager.getAvailableServer();
+        const server = await serverManager.getAvailableServer("none", "none");
         const response = await fetch(`${server}/api/upload/`, {
           method: "POST",
           body: formData,
@@ -157,7 +157,7 @@ export const SongList: React.FC<SongListProps> = ({
       <div className="overflow-y-auto flex-grow hide-scrollbar px-6 pb-6">
         {songs.map((song, index) => (
           <motion.div
-            key={song.id}
+            key={song.title + "-" + song.artist}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.1 }}
@@ -166,7 +166,7 @@ export const SongList: React.FC<SongListProps> = ({
                 ? "bg-purple-700"
                 : "hover:bg-purple-800"
             }`}
-            onClick={() => onSongSelect(song.id)}
+            onClick={() => onSongSelect(song.title + "-" + song.artist)}
           >
             <Image
               src={song.coverUrl}

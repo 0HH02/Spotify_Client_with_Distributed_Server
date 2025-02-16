@@ -11,6 +11,10 @@ class SongKey:
             return None
         return SongKey(info[0], info[1])
 
+    @property
+    def key(self):
+        return self.title, self.artist
+
     def __str__(self) -> str:
         return f"{self.title}-{self.artist}"
 

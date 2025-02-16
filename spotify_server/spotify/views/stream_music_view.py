@@ -8,8 +8,8 @@ from ..distributed_layer.song_dto import SongKey
 
 
 class StreamMusicView(APIView):
-    def get(self, request, music_id, _=None):
-
+    def get(self, request, _=None):
+        music_id: str | None = request.query_params.get("song_id")
         range_header = request.headers.get("Range", "").strip()
         range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
 
