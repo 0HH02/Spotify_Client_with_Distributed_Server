@@ -10,7 +10,7 @@ class DistributedInterface:
     def __new__(cls, *_, **__):
         if cls._instance is None:
             ip: str = socket.gethostbyname(socket.gethostname())
-            cls._instance = DistributedInterface()
+            cls._instance = super().__new__(cls)
             cls._distributed_node = KademliaNode(ip)
         return cls._instance
 
