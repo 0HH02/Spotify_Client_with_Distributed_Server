@@ -1,6 +1,5 @@
-import threading
 from heapq import heappop, heappush
-
+from concurrent.futures import ThreadPoolExecutor
 from .remote_node import RemoteNode
 from .kademlia_node import KademliaNode
 
@@ -17,17 +16,8 @@ class KBucket:
         if len(self._nodes) < self.k:
             self._nodes.add(node)
         else:
-            treahds: list[threading.Thread] = []
-            for remote_node in self._nodes:
-                treahds.append(
-                    threading.Thread(target=self.check_node, args=[remote_node])
-                )
-
-            for thread in treahds:
-                thread.start()
-
-            for thread in treahds:
-                thread.join()
+            with ThreadPoolExecutor(3) as executor:
+                executor.map(self.check_node, self._nodes)
 
             if len(self._failures) > 0:
                 self._nodes.remove(self._failures.pop())
