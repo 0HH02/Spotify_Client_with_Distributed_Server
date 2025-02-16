@@ -46,7 +46,7 @@ if [ $? -eq 0 ]; then
     echo "router container removed."    
 fi
 
-docker run --name $ROUTER_CONTAINER -d $ROUTER_IMAGE
+docker run -i --name $ROUTER_CONTAINER -d $ROUTER_IMAGE
 echo "router container executed."
 
 docker network connect --ip 172.0.12.254 $CLIENT_NETWORK $ROUTER_CONTAINER
@@ -102,6 +102,8 @@ if [ $? -eq 0 ]; then
 fi
 
 docker run --name $SERVER_CONTAINER -p 8000:8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+
+
 
 
 
