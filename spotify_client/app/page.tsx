@@ -8,7 +8,6 @@ import { Menu } from "lucide-react"; // Importar ArrowRight
 import serverManager from "@/middleware/ServerManager";
 
 interface Song {
-  id: number;
   title: string;
   artist: string;
   genre: string;
@@ -37,8 +36,8 @@ export default function Home() {
     try {
       const server = await serverManager.getAvailableServer();
       const response = await axios.get(`${server}/api/songs/`);
+      console.log(response.data.data);
       const apiSongs = response.data.data.map((song: Song) => ({
-        id: song.id.toString(),
         title: song.title,
         artist: song.artist,
         genre: song.genre,
@@ -68,7 +67,6 @@ export default function Home() {
         )}`
       );
       const apiSongs = response.data.data.map((song: Song) => ({
-        id: song.id.toString(),
         title: song.title,
         artist: song.artist,
         genre: song.genre,

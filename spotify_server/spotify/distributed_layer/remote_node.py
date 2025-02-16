@@ -3,7 +3,7 @@ import time
 from enum import Enum
 
 from .rpc_message import RpcRequest, RpcResponse
-from .song_dto import SongDto
+from .song_dto import SongDto,SongMetadataDto
 
 
 class RemoteFunctions(Enum):
@@ -55,7 +55,7 @@ class RemoteNode:
 
     def get_keys_by_query(
         self, node_ip: str, search_by: str, query: str
-    ) -> list[SongDto] | None:
+    ) -> list[SongMetadataDto] | None:
         tries: int = 0
         while True:
             try:
@@ -76,7 +76,7 @@ class RemoteNode:
                     data: bytes = sock.recv(1024)
                     response: RpcResponse | None = RpcResponse.decode(data)
                     if response:
-                        return [SongDto.from_dict(n) for n in response.result]
+                        return [SongMetadataDto.from_dict(n) for n in response.result]
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
@@ -88,7 +88,7 @@ class RemoteNode:
                 tries += 1
                 time.sleep(0.2)
 
-    def get_all_keys(self, node_ip: str) -> list[SongDto] | None:
+    def get_all_keys(self, node_ip: str) -> list[SongMetadataDto] | None:
         tries: int = 0
         while True:
             try:
@@ -109,7 +109,7 @@ class RemoteNode:
                     data: bytes = sock.recv(1024)
                     response: RpcResponse | None = RpcResponse.decode(data)
                     if response:
-                        return [SongDto.from_dict(n) for n in response]
+                        return [SongMetadataDto.from_dict(n) for n in response]
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")

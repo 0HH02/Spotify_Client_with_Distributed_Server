@@ -20,7 +20,6 @@ class ServerManager {
         method: "HEAD",
         signal: controller.signal, // Asigna el signal del AbortController
       });
-
       return response.ok; // Retorna true si la respuesta es correcta
     } catch (error) {
       if (error instanceof Error) {

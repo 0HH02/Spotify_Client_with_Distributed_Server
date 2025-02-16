@@ -54,12 +54,12 @@ class SongServices:
             image: File | None = (
                 File(
                     io.BytesIO(song.image.image_data),
-                    name=song.key + "img." + song.image.file_extension,
+                    name=str(song.key) + "img." + song.image.file_extension,
                 )
                 if song.image
                 else None
             )
-            audio: File = File(io.BytesIO(song.audio_data), name=song.key + ".mp3")
+            audio: File = File(io.BytesIO(song.audio_data), name=str(song.key) + ".mp3")
 
             created_song: Song = Song(
                 title=song.title,

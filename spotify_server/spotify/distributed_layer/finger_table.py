@@ -67,8 +67,7 @@ class FingerTable:
                 previous_k_bucket -= 1
                 still_searching = True
 
-        return [heappop(closest_nodes)[1] for _ in range(max(k, len(closest_nodes)))]
-
+        return [heappop(closest_nodes)[1] for _ in range(min(k, len(closest_nodes)))]
     def add_node(self, remote_node: RemoteNode):
         distance_bit: int = self.get_bit_distance(remote_node.id)
         self.buckets[distance_bit].add_node(remote_node)

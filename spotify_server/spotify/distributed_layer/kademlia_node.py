@@ -7,7 +7,7 @@ from .remote_node import RemoteNode
 from .utils import sha1_hash
 from .network_interface import NetworkInterface
 from .finger_table import FingerTable, K_BUCKET_SIZE
-from .song_dto import SongDto, SongKey
+from .song_dto import SongDto, SongKey,SongMetadataDto
 
 from ..services.song_services import SongServices
 
@@ -26,7 +26,7 @@ class KademliaNode:
 
     def get_all_songs(self) -> list[SongDto]:
         nodes: list[RemoteNode] = self._search_all_nodes()
-        songs: set[SongDto] = set()
+        songs: set[SongMetadataDto] = set()
         lock = threading.Lock()
 
         def _get_songs_from_node(node: RemoteNode):
@@ -39,13 +39,14 @@ class KademliaNode:
 
         # TODO improve this using hierarchy of nodes
         for song in self.kademlia_interface.get_all_metadata():
-            songs.add(SongDto.from_dict(song))
+            print(song)
+            songs.add(SongMetadataDto.from_dict(song))
 
         return list(songs)
 
     def search_songs_by(self, search_by: str, query: str):
         nodes: list[RemoteNode] = self._search_all_nodes()
-        songs: set[SongDto] = set()
+        songs: set[SongMetadataDto] = set()
         lock = threading.Lock()
 
         def _search_songs_by_from_node(node: RemoteNode):
@@ -58,7 +59,7 @@ class KademliaNode:
 
         # TODO improve this using hierarchy of nodes
         for song in self.kademlia_interface.get_all_metadata():
-            songs.add(SongDto.from_dict(song))
+            songs.add(SongMetadataDto.from_dict(song))
 
         return list(songs)
 
@@ -67,9 +68,12 @@ class KademliaNode:
         nearest: list[RemoteNode] = self._search_k_nearest(key)
 
         # TODO improve this using hierarchy of nodes
-        if not nearest or nearest[-1].id ^ key > self.id ^ key:
+        if len(nearest) < K_BUCKET_SIZE:
+            nearest.append(RemoteNode(self.ip,self.id))
+        elif nearest[-1].id ^ key > self.id ^ key:
             nearest.pop()
-            nearest.append(RemoteNode(self.ip, self.id))
+            nearest.append(RemoteNode(self.ip,self.id))
+
 
         return nearest
 
@@ -77,15 +81,19 @@ class KademliaNode:
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
 
+        local_save = True
         # TODO improve this using hierarchy of nodes
-        if not nearest or nearest[-1].id ^ key > self.id ^ key:
+        if len(nearest) < K_BUCKET_SIZE:
+            local_save = self.kademlia_interface.save_song(song)
+        elif nearest[-1].id ^ key > self.id ^ key:
             nearest.pop()
             self.kademlia_interface.save_song(song)
 
         with ThreadPoolExecutor(ALPHA) as executor:
             results = executor.map(lambda node: node.save_key(song), nearest)
 
-        return True
+
+        return local_save and all(results)
 
     def stream_song(self, key: SongKey, rang: tuple[int, int]):
         """ """
@@ -124,7 +132,7 @@ class KademliaNode:
             with ThreadPoolExecutor(ALPHA) as executor:
                 executor.map(_get_nears_node, range(ALPHA))
 
-        return [heappop(nearest)[1] for _ in range(max(k, len(nearest)))]
+        return [heappop(nearest)[1] for _ in range(min(k, len(nearest)))]
 
     def _search_all_nodes(self):
         nodes: list[RemoteNode] = []

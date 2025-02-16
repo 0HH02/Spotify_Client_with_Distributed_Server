@@ -14,11 +14,12 @@ class SongKey:
     def __str__(self) -> str:
         return f"{self.title}-{self.artist}"
 
-    def key(self) -> tuple[str, str]:
-        return self.title, self.artist
 
     def __eq__(self, value):
         return isinstance(value, SongKey) and str(self) == str(value)
+    
+    def __hash__(self):
+        return self.__str__().__hash__()
 
 
 class ImageSongDto:
@@ -85,7 +86,52 @@ class SongDto:
         }
 
     @property
-    def metadata(self) -> dict:
+    def key(self) -> SongKey:
+        return SongKey(self.title, self.artist)
+
+    def __eq__(self, value):
+        return isinstance(value, SongDto) and self.key == value.key
+    
+    def __hash__(self):
+        return self.key.__hash__()
+
+
+class SongMetadataDto:
+    def __init__(
+        self,
+        title: str,
+        artist: str,
+        album: str,
+        genre: str,
+        duration: float,
+        size: int,
+        image_url: str,
+    ):
+        self.title: str = title
+        self.artist: str = artist
+        self.album: str = album
+        self.genre: str = genre
+        self.duration: float = duration
+        self.size: int = size
+        self.image_url: str = image_url
+
+    @staticmethod
+    def from_dict(data: dict):
+        try:
+            return SongMetadataDto(
+                title=data["title"],
+                artist=data["artist"],
+                album=data["album"],
+                genre=data["genre"],
+                duration=data["duration"],
+                size=data["size"],
+                image_url=data["image"],
+            )
+        except KeyError:
+            print(f"Error al crear el objeto SongMetadataDto with {data}")
+            return None
+
+    def to_dict(self) -> dict:
         return {
             "title": self.title,
             "artist": self.artist,
@@ -93,7 +139,7 @@ class SongDto:
             "genre": self.genre,
             "duration": self.duration,
             "size": self.size,
-            "image": self.image.to_dict(),
+            "image": self.image_url,
         }
 
     @property
@@ -102,3 +148,6 @@ class SongDto:
 
     def __eq__(self, value):
         return isinstance(value, SongDto) and self.key == value.key
+    
+    def __hash__(self):
+        return self.key.__hash__()
