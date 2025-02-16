@@ -207,7 +207,7 @@ class Mp3Decoder:
                     * 1000
                 )
 
-                sampling_rate: int = Mp3Decoder.SAMPLING_RATE_FREQUENCY[version][
+                sampling_rate: int = Mp3Decoder.SAMPLING_RATE_FREQUENCY[version - 1][
                     sampling_rate_index
                 ]
                 samples_per_frame: int = Mp3Decoder.SAMPLES_PER_FRAME[version - 1][

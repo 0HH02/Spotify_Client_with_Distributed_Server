@@ -5,15 +5,20 @@ class SongKey:
         self.artist: str = artist
 
     @staticmethod
-    def from_string(key: str) -> "SongKey":
-        title, artist = key.split("-")
-        return SongKey(title, artist)
+    def from_string(key: str) -> "SongKey" | None:
+        info = key.split("-")
+        if len(info) != 2:
+            return None
+        return SongKey(info[0], info[1])
 
     def __str__(self) -> str:
         return f"{self.title}-{self.artist}"
 
     def key(self) -> tuple[str, str]:
         return self.title, self.artist
+
+    def __eq__(self, value):
+        return isinstance(value, SongKey) and str(self) == str(value)
 
 
 class ImageSongDto:
@@ -99,3 +104,6 @@ class SongDto:
     @property
     def key(self) -> SongKey:
         return SongKey(self.title, self.artist)
+
+    def __eq__(self, value):
+        return isinstance(value, SongDto) and self.key == value.key
