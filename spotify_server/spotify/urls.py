@@ -6,6 +6,7 @@ from .views import (
     ListSongsMetadataView,
     SearchSongsView,
     UploadSongView,
+    FindStreamersView,
 )
 
 urlpatterns = [
@@ -13,4 +14,5 @@ urlpatterns = [
     path("songs/", ListSongsMetadataView.as_view(), name="list-songs"),
     path("search/", SearchSongsView.as_view(), name="search-songs"),
     path("upload/", UploadSongView.as_view(), name="upload-song"),
+    path("findStreamers/", FindStreamersView.as_view(), name="find-streamer"),
 ]

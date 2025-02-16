@@ -53,14 +53,14 @@ class FingerTable:
         still_searching: bool = True
         while len(closest_nodes) < k and still_searching:
             still_searching = False
-            if next_k_bucket >= len(self.buckets):
+            if next_k_bucket < len(self.buckets):
                 for remote_node in self.buckets[next_k_bucket].nodes:
                     heappush(closest_nodes, (-(remote_node.id ^ key), remote_node))
 
                 next_k_bucket += 1
                 still_searching = True
 
-            if previous_k_bucket < 0:
+            if previous_k_bucket > 0:
                 for remote_node in self.buckets[previous_k_bucket].nodes:
                     heappush(closest_nodes, (-(remote_node.id ^ key), remote_node))
 

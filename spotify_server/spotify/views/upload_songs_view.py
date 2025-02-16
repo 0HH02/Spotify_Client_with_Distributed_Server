@@ -20,6 +20,9 @@ class UploadSongView(APIView):
                 file_bytes: bytes = file.read()
                 song_data: dict = Mp3Decoder.decode(file_bytes)
                 song_dto: SongDto | None = SongDto.from_dict(song_data)
+                print(song_data)
+                print("===========================================================================================================================")
+                print(song_dto)
                 if song_dto:
                     distributed_interface = DistributedInterface()
                     succes: bool = distributed_interface.store_song(song_dto)
