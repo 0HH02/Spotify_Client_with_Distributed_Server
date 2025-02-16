@@ -20,14 +20,20 @@ class UploadSongView(APIView):
                 file_bytes: bytes = file.read()
                 song_data: dict = Mp3Decoder.decode(file_bytes)
                 song_dto: SongDto | None = SongDto.from_dict(song_data)
-                print(song_data)
-                print("===========================================================================================================================")
-                print(song_dto)
                 if song_dto:
                     distributed_interface = DistributedInterface()
-                    succes: bool = distributed_interface.store_song(song_dto)
+                    succes, active_nodes = distributed_interface.store_song(song_dto)
                     if succes:
-                        return Response({}, status.HTTP_200_OK)
+                        return Response(
+                            {
+                                "data": {"nodes": [n.to_dict() for n in active_nodes]},
+                            },
+                            status.HTTP_200_OK,
+                        )
+                return Response(
+                    {"error": "Error uploading the song"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
 
         except ValidationError:
             return Response(

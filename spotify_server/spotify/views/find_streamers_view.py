@@ -25,6 +25,14 @@ class FindStreamersView(APIView):
             )
 
         distributed_interface = DistributedInterface()
-        streamers = distributed_interface.search_song_streamers(song_key)
+        streamers, active_nodes = distributed_interface.search_song_streamers(song_key)
 
-        return Response([n.to_dict() for n in streamers], status.HTTP_200_OK)
+        return Response(
+            {
+                "data": {
+                    "streamers": [n.to_dict() for n in streamers],
+                    "nodes": [n.to_dict() for n in active_nodes],
+                },
+            },
+            status.HTTP_200_OK,
+        )

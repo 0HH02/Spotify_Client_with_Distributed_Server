@@ -1,5 +1,6 @@
 from heapq import heappop, heappush
 from concurrent.futures import ThreadPoolExecutor
+from random import randint
 from .remote_node import RemoteNode
 
 K_BUCKET_SIZE = 4
@@ -24,7 +25,7 @@ class KBucket:
                 self._failures.clear()
 
     def check_node(self, node: RemoteNode) -> None:
-        aviable: bool = node.ping()
+        aviable, _ = node.ping()
         if not aviable:
             self._failures.add(node)
 
@@ -40,6 +41,17 @@ class FingerTable:
 
     def get_all_nodes(self) -> list[RemoteNode]:
         return [node for bucket in self.buckets for node in bucket.nodes]
+
+    def get_active_nodes(self, k) -> list[RemoteNode]:
+        nodes: list[RemoteNode] = self.get_all_nodes()
+        for _ in range(len(nodes)):
+            n: RemoteNode = nodes[randint(0, len(nodes) - 1)]
+            if n.ping()[0]:
+                nodes.append(n)
+            if len(nodes) >= k:
+                break
+
+        return nodes
 
     def get_k_closets_nodes(self, key: int, k: int) -> list[RemoteNode]:
         closest_nodes: list[RemoteNode] = []
@@ -68,6 +80,7 @@ class FingerTable:
                 still_searching = True
 
         return [heappop(closest_nodes)[1] for _ in range(min(k, len(closest_nodes)))]
+
     def add_node(self, remote_node: RemoteNode):
         distance_bit: int = self.get_bit_distance(remote_node.id)
         self.buckets[distance_bit].add_node(remote_node)
