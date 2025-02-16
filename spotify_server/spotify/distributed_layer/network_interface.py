@@ -6,14 +6,13 @@ from concurrent.futures import ThreadPoolExecutor
 
 
 from .rpc_message import RpcRequest, RpcResponse
-from .kademlia_node import KademliaNode
 from .remote_node import RemoteNode, RemoteFunctions
 from .song_dto import SongDto
 
 
 class NetworkInterface:
-    def __init__(self, node: KademliaNode):
-        self.node: KademliaNode = node
+    def __init__(self, node):
+        self.node = node
         self.listening: bool = False
 
     def _listen_new_nodes_request(self):

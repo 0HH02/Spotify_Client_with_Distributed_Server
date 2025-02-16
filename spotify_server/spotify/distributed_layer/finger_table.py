@@ -1,7 +1,6 @@
 from heapq import heappop, heappush
 from concurrent.futures import ThreadPoolExecutor
 from .remote_node import RemoteNode
-from .kademlia_node import KademliaNode
 
 K_BUCKET_SIZE = 4
 
@@ -35,9 +34,9 @@ class KBucket:
 
 
 class FingerTable:
-    def __init__(self, node: KademliaNode):
+    def __init__(self, node):
         self.buckets: list[KBucket] = [KBucket() for _ in range(160)]
-        self.node: KademliaNode = node
+        self.node = node
 
     def get_all_nodes(self) -> list[RemoteNode]:
         return [node for bucket in self.buckets for node in bucket.nodes]

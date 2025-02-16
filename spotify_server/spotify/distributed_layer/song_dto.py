@@ -5,7 +5,7 @@ class SongKey:
         self.artist: str = artist
 
     @staticmethod
-    def from_string(key: str) -> "SongKey" | None:
+    def from_string(key: str):
         info = key.split("-")
         if len(info) != 2:
             return None

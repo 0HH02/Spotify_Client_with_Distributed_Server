@@ -3,8 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from heapq import heappush, heappop
 
 
-from spotify.distributed_layer.remote_node import RemoteNode
-
+from .remote_node import RemoteNode
 from .utils import sha1_hash
 from .network_interface import NetworkInterface
 from .finger_table import FingerTable, K_BUCKET_SIZE
