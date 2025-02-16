@@ -3,7 +3,7 @@ import time
 from enum import Enum
 
 from .rpc_message import RpcRequest, RpcResponse
-from .song_dto import SongDto,SongMetadataDto
+from .song_dto import SongDto, SongMetadataDto
 
 
 class RemoteFunctions(Enum):
@@ -20,23 +20,24 @@ class RemoteNode:
         self.ip: str = ip
         self.id: int = node_id
 
-    def save_key(self, node_ip: str, song: SongDto):
+    def save_key(self, song: SongDto):
         tries: int = 0
         while True:
             try:
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.bind((node_ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (node_ip, port),
                         self.id,
                         RemoteFunctions.SAVE_KEY.value,
                         [song.to_dict()],
                     )
 
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)
@@ -54,23 +55,24 @@ class RemoteNode:
                 time.sleep(0.2)
 
     def get_keys_by_query(
-        self, node_ip: str, search_by: str, query: str
+        self, search_by: str, query: str
     ) -> list[SongMetadataDto] | None:
         tries: int = 0
         while True:
             try:
                 with socket.socket() as sock:
-                    sock.bind((node_ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (node_ip, port),
                         self.id,
                         RemoteFunctions.GET_KEYS_BY_QUERY.value,
                         [query, search_by],
                     )
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)
@@ -88,22 +90,23 @@ class RemoteNode:
                 tries += 1
                 time.sleep(0.2)
 
-    def get_all_keys(self, node_ip: str) -> list[SongMetadataDto] | None:
+    def get_all_keys(self) -> list[SongMetadataDto] | None:
         tries: int = 0
         while True:
             try:
                 with socket.socket() as sock:
-                    sock.bind((node_ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (node_ip, port),
                         self.id,
                         RemoteFunctions.GET_ALL_KEYS.value,
                         [],
                     )
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)
@@ -121,22 +124,23 @@ class RemoteNode:
                 tries += 1
                 time.sleep(0.2)
 
-    def get_nears_node(self, node_ip: str, target_id: int) -> list["RemoteNode"] | None:
+    def get_nears_node(self, target_id: int) -> list["RemoteNode"] | None:
         tries: int = 0
         while True:
             try:
                 with socket.socket() as sock:
-                    sock.bind((node_ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (node_ip, port),
                         self.id,
                         RemoteFunctions.GET_NEARS_NODE.value,
                         [target_id],
                     )
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)
@@ -161,17 +165,18 @@ class RemoteNode:
         while True:
             try:
                 with socket.socket() as sock:
-                    sock.bind((self.ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (self.ip, port),
                         self.id,
                         RemoteFunctions.PING.value,
                         [],
                     )
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)
@@ -196,18 +201,19 @@ class RemoteNode:
         while True:
             try:
                 with socket.socket() as sock:
-                    sock.bind((self.ip, 0))
                     sock.settimeout(3)
 
                     port = sock.getsockname()[1]
                     request = RpcRequest(
-                        (self.ip, port),
                         self.id,
                         RemoteFunctions.GET_ALL_NODES,
                         [],
                     )
 
                     sock.connect((self.ip, 1729))
+                    print(
+                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                    )
                     sock.sendall(request.encode())
 
                     data: bytes = sock.recv(1024)

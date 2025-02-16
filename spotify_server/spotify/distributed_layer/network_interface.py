@@ -28,7 +28,6 @@ class NetworkInterface:
                         sock.connect((self.node.ip, 1729))
                         sock.sendall(
                             RpcRequest(
-                                addr,
                                 int(node_id),
                                 RemoteFunctions.PING.value,
                                 [],
@@ -74,12 +73,12 @@ class NetworkInterface:
 
         return discovered_nodes
 
-    def handle_connection(self, conn: socket.socket, _: tuple[str, str]):
+    def handle_connection(self, conn: socket.socket, addr: tuple[str, str]):
         try:
             data: bytes = conn.recv(1024)
             request: RpcRequest | None = RpcRequest.decode(data)
             if request:
-                response: RpcResponse = self.handle_request(request)
+                response: RpcResponse = self.handle_request(request, addr)
                 conn.sendall(response.encode())
             else:
                 pass
@@ -87,7 +86,10 @@ class NetworkInterface:
         finally:
             conn.close()
 
-    def handle_request(self, request: RpcRequest) -> RpcResponse:
+    def handle_request(self, request: RpcRequest, addr: tuple[str, str]) -> RpcResponse:
+        request_node = RemoteNode(addr[0], request.sender_id)
+        self.node.update_finger_table(request_node)
+
         if request.function == RemoteFunctions.PING.value:
             return RpcResponse(self.node.kademlia_interface.ping())
 

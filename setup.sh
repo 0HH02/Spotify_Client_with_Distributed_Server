@@ -101,7 +101,11 @@ if [ $? -eq 0 ]; then
     echo "server container removed."    
 fi
 
-docker run --name $SERVER_CONTAINER -p 8000:8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+for i in {1..10}
+do
+	docker run --name "${SERVER_CONTAINER}_${i}" -p 8000:8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+done	
+
 
 
 

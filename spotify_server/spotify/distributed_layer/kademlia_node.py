@@ -1,4 +1,5 @@
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from heapq import heappush, heappop
 
@@ -30,9 +31,10 @@ class KademliaNode:
         lock = threading.Lock()
 
         def _get_songs_from_node(node: RemoteNode):
-            songs_from_node = node.get_all_keys(self.ip)
-            with lock:
-                songs.update(songs_from_node)
+            songs_from_node = node.get_all_keys()
+            if songs_from_node:
+                with lock:
+                    songs.update(songs_from_node)
 
         with ThreadPoolExecutor(ALPHA) as executor:
             executor.map(_get_songs_from_node, nodes)
@@ -52,7 +54,7 @@ class KademliaNode:
         lock = threading.Lock()
 
         def _search_songs_by_from_node(node: RemoteNode):
-            songs_from_node = node.get_keys_by_query(self.ip, search_by, query)
+            songs_from_node = node.get_keys_by_query(search_by, query)
             with lock:
                 songs.update(songs_from_node)
 
@@ -104,6 +106,9 @@ class KademliaNode:
         if self._constains_song(key):
             return SongServices.stream_song(key, rang)
 
+    def update_finger_table(self, node: RemoteNode):
+        self.finger_table.add_node(node)
+
     def _constains_song(self, key: SongKey):
         return SongServices.exists_song(key)
 
@@ -121,7 +126,7 @@ class KademliaNode:
             with lock:
                 current: RemoteNode = pending.pop()
                 already_queried.add(current)
-            new_nodes: list[RemoteNode] | None = current.get_nears_node(self.ip, key)
+            new_nodes: list[RemoteNode] | None = current.get_nears_node(key)
             if new_nodes:
                 for remote_node in new_nodes:
                     with lock:
@@ -171,11 +176,17 @@ class KademliaNode:
 
     def _keep_connection_to_network(self):
         while True:
-            discovered_nodes: list[RemoteNode] = self.network_interface.discover_nodes()
-            if discovered_nodes:
-                for node in discovered_nodes:
-                    self.finger_table.add_node(node)
-                break
+            if len(self.finger_table.get_active_nodes(10)) < 3:
+                discovered_nodes: list[RemoteNode] = (
+                    self.network_interface.discover_nodes()
+                )
+                if discovered_nodes:
+                    for node in discovered_nodes:
+                        self.finger_table.add_node(node)
+
+                time.sleep(20)
+            else:
+                time.sleep(60)
 
 
 class KademliaInterface:
