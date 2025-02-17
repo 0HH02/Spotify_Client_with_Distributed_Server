@@ -1,4 +1,5 @@
 import socket
+import ssl
 import time
 from enum import Enum
 
@@ -24,26 +25,29 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
+                        ssock.settimeout(3)
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.SAVE_KEY.value,
-                        [song.to_dict()],
-                    )
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.SAVE_KEY.value,
+                            [song.to_dict()],
+                        )
 
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return bool(response.result)
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return bool(response.result)
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
                 break
@@ -60,25 +64,30 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
+                        ssock.settimeout(3)
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.GET_KEYS_BY_QUERY.value,
-                        [query, search_by],
-                    )
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.GET_KEYS_BY_QUERY.value,
+                            [query, search_by],
+                        )
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return [SongMetadataDto.from_dict(n) for n in response.result]
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return [
+                                SongMetadataDto.from_dict(n) for n in response.result
+                            ]
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
@@ -94,25 +103,28 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.GET_ALL_KEYS.value,
-                        [],
-                    )
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        ssock.settimeout(3)
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.GET_ALL_KEYS.value,
+                            [],
+                        )
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return [SongMetadataDto.from_dict(n) for n in response]
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return [SongMetadataDto.from_dict(n) for n in response]
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
@@ -128,27 +140,30 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.GET_NEARS_NODE.value,
-                        [target_id],
-                    )
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        ssock.settimeout(3)
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.GET_NEARS_NODE.value,
+                            [target_id],
+                        )
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return [RemoteNode.from_dict(n) for n in response.result]
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return [RemoteNode.from_dict(n) for n in response.result]
 
-                    return None
+                        return None
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
@@ -164,27 +179,30 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.PING.value,
-                        [],
-                    )
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        ssock.settimeout(3)
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.PING.value,
+                            [],
+                        )
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return response.result[0], response.result[1]
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return response.result[0], response.result[1]
 
-                    return False, None
+                        return False, None
 
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
@@ -200,28 +218,31 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
-                    sock.settimeout(3)
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                    port = sock.getsockname()[1]
-                    request = RpcRequest(
-                        self.id,
-                        RemoteFunctions.GET_ALL_NODES,
-                        [],
-                    )
+                        ssock.settimeout(3)
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            self.id,
+                            RemoteFunctions.GET_ALL_NODES,
+                            [],
+                        )
 
-                    sock.connect((self.ip, 1729))
-                    print(
-                        f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
-                    )
-                    sock.sendall(request.encode())
+                        ssock.connect((self.ip, 1729))
+                        print(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                        )
+                        ssock.sendall(request.encode())
 
-                    data: bytes = sock.recv(1024)
-                    response: RpcResponse | None = RpcResponse.decode(data)
-                    if response:
-                        return [RemoteNode.from_dict(n) for n in response.result]
+                        data: bytes = ssock.recv(1024)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        if response:
+                            return [RemoteNode.from_dict(n) for n in response.result]
 
-                    return []
+                        return []
             except socket.timeout:
                 print(f"Timeout making request{request} to {self.ip}")
                 return []

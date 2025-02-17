@@ -1,4 +1,5 @@
 import socket
+import ssl
 import time
 import threading
 import multiprocessing
@@ -35,14 +36,20 @@ class NetworkInterface:
                         )
 
     def _listen(self):
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
             print(f"starting listening in ip: {self.node.ip}")
             listening_socket.bind((self.node.ip, 1729))
             listening_socket.listen(10)
-            with ThreadPoolExecutor(5) as executor:
-                while self.listening:
-                    conn, addr = listening_socket.accept()
-                    executor.submit(self.handle_connection, conn, addr)
+            with context.wrap_socket(
+                listening_socket, server_side=True
+            ) as s_listening_socket:
+                with ThreadPoolExecutor(5) as executor:
+                    while self.listening:
+                        conn, addr = s_listening_socket.accept()
+                        executor.submit(self.handle_connection, conn, addr)
 
     def start_listening(self):
         self.listening = True
