@@ -57,7 +57,7 @@ export const SongList: React.FC<SongListProps> = ({
       try {
         const formData = new FormData();
         formData.append("file", file); // 'file' es el nombre esperado por el servidor
-        const server = await serverManager.getAvailableServer("none", "none");
+        const server = await serverManager.getAvailableServer();
         const response = await fetch(`${server}/api/upload/`, {
           method: "POST",
           body: formData,
