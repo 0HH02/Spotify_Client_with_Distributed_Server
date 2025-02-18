@@ -103,7 +103,7 @@ fi
 
 for i in {0..9}
 do
-	docker run -d --name "${SERVER_CONTAINER}_${i}" -p "800${i}":"800${i}" -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+	docker run -d --name "${SERVER_CONTAINER}_${i}" -p "800${i}":8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
 done	
 
 
