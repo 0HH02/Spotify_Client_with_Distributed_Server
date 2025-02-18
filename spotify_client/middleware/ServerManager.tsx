@@ -105,4 +105,4 @@ class ServerManager {
   }
 }
 
-export default new ServerManager(["http://127.0.0.1:8000"]);
+export default new ServerManager(["http://172.0.13.2:8000","http://172.0.13.3:8000","http://172.0.13.4:8000","http://172.0.13.5:8000","http://172.0.13.6:8000","http://172.0.13.7:8000","http://172.0.13.8:8000"]);

@@ -75,7 +75,7 @@ if [ $? -eq 0 ]; then
     echo "client container removed."    
 fi
 
-docker run --name $CLIENT_CONTAINER -p 3000:3000 -v $(pwd)/$CLIENT_FOLDER:/app --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
+docker run -d --name $CLIENT_CONTAINER -p 3000:3000 -v $(pwd)/$CLIENT_FOLDER:/app --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
 echo "client container executed."
 
 
@@ -103,7 +103,7 @@ fi
 
 for i in {1..10}
 do
-	docker run --name "${SERVER_CONTAINER}_${i}" -p 8000:8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+	docker run -d --name "${SERVER_CONTAINER}_${i}" -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
 done	
 
 
