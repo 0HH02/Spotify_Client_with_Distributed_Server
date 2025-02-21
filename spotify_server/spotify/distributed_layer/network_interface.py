@@ -23,6 +23,9 @@ class NetworkInterface:
             while self.listening:
                 data, addr = sock.recvfrom(1024)
                 node_id: str = data.decode()
+                print(
+                    f"node {node_id} with ip: {addr[0]} is requesting to join to the network"
+                )
                 if len(node_id) == 160 and all(n in ["0", "1"] for n in node_id):
                     sock.sendto(self.node.id, addr)
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -37,11 +40,14 @@ class NetworkInterface:
 
     def _listen(self):
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
-        context.load_cert_chain(certfile="cert.pem", keyfile="key.pem")
+        context.load_cert_chain(
+            certfile="./spotify/distributed_layer/cert.pem",
+            keyfile="./spotify/distributed_layer/key.pem",
+        )
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
             print(f"starting listening in ip: {self.node.ip}")
-            listening_socket.bind((self.node.ip, 1729))
+            listening_socket.bind(("0.0.0.0", 1729))
             listening_socket.listen(10)
             with context.wrap_socket(
                 listening_socket, server_side=True
@@ -67,11 +73,13 @@ class NetworkInterface:
                 sock.bind((self.node.ip, 0))
                 message: str = str(self.node.id)
 
+                print("requesting to joining the network")
                 sock.sendto(message.encode(), ("255.255.255.255", 1728))
                 initial_time: float = time.time()
                 while time.time() - initial_time < 5:
                     data, addr = sock.recvfrom(1024)
                     node_id: str = data.decode()
+                    print(f"node {node_id} answer the join network request")
                     if len(node_id) == 160 and all(n in ["0", "1"] for n in node_id):
                         discovered_nodes.append(RemoteNode(addr[0], int(node_id)))
 
@@ -96,6 +104,8 @@ class NetworkInterface:
     def handle_request(self, request: RpcRequest, addr: tuple[str, str]) -> RpcResponse:
         request_node = RemoteNode(addr[0], request.sender_id)
         self.node.update_finger_table(request_node)
+
+        print(f"Received request {request} from {request_node}")
 
         if request.function == RemoteFunctions.PING.value:
             return RpcResponse(self.node.kademlia_interface.ping())

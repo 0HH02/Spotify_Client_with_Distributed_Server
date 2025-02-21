@@ -18,10 +18,9 @@ class SongKey:
     def __str__(self) -> str:
         return f"{self.title}-{self.artist}"
 
-
     def __eq__(self, value):
         return isinstance(value, SongKey) and str(self) == str(value)
-    
+
     def __hash__(self):
         return self.__str__().__hash__()
 
@@ -33,10 +32,22 @@ class ImageSongDto:
 
     @staticmethod
     def from_dict(data: dict):
-        return ImageSongDto(data["file_extension"], data["image_data"])
+        try:
+            return ImageSongDto(data["file_extension"], data["image_data"])
+        except KeyError:
+            print(f"Error al crear el objeto ImageSongDto with {data}")
+            return None
 
     def to_dict(self) -> dict:
         return {"file_extension": self.file_extension, "image_data": self.image_data}
+
+    def __str__(self) -> str:
+        dct = self.to_dict()
+        dct["image_data"] = "a lot of bytes"
+        return dct.__str__()
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class SongDto:
@@ -57,7 +68,7 @@ class SongDto:
         self.genre: str = genre
         self.duration: float = duration
         self.size: int = size
-        self.image: ImageSongDto = image
+        self.image: ImageSongDto | None = image
         self.audio_data: bytes = audio_data
 
     @staticmethod
@@ -66,8 +77,8 @@ class SongDto:
             return SongDto(
                 title=data["title"],
                 artist=data["artist"],
-                album=data["album"],
-                genre=data["genre"],
+                album=data.get("album", "unknown"),
+                genre=data.get("genre", "unknown"),
                 duration=data["duration"],
                 size=data["size"],
                 image=ImageSongDto.from_dict(data["image"]),
@@ -85,7 +96,7 @@ class SongDto:
             "genre": self.genre,
             "duration": self.duration,
             "size": self.size,
-            "image": self.image.to_dict(),
+            "image": self.image.to_dict() if self.image else None,
             "audio_data": self.audio_data,
         }
 
@@ -93,9 +104,18 @@ class SongDto:
     def key(self) -> SongKey:
         return SongKey(self.title, self.artist)
 
+    def __str__(self):
+        dct = self.to_dict()
+        dct["audio_data"] = "a lot of bytes"
+        dct["image"]["image_data"] = "a lot of bytes"
+        return dct.__str__()
+
+    def __repr__(self):
+        return self.__str__()
+
     def __eq__(self, value):
         return isinstance(value, SongDto) and self.key == value.key
-    
+
     def __hash__(self):
         return self.key.__hash__()
 
@@ -152,6 +172,6 @@ class SongMetadataDto:
 
     def __eq__(self, value):
         return isinstance(value, SongDto) and self.key == value.key
-    
+
     def __hash__(self):
         return self.key.__hash__()

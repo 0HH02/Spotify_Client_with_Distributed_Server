@@ -53,6 +53,7 @@ docker network connect --ip 172.0.12.254 $CLIENT_NETWORK $ROUTER_CONTAINER
 docker network connect --ip 172.0.13.254 $SERVER_NETWORK $ROUTER_CONTAINER
 
 
+
 #Client Container Configuration
 
 CLIENT_IMAGE="react_client_img"
@@ -103,7 +104,7 @@ fi
 
 for i in {0..9}
 do
-	docker run -d --name "${SERVER_CONTAINER}_${i}" -p "800${i}":8000 -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
+	docker run -d --name "${SERVER_CONTAINER}_${i}" -v $(pwd)/$SERVER_FOLDER:/app --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
 done	
 
 

@@ -23,7 +23,8 @@ class KademliaNode:
         self.finger_table = FingerTable(self)
         self.kademlia_interface = KademliaInterface(self)
         self.connected = False
-        threading.Thread(target=self._keep_connection_to_network, args=[]).start()
+        self._keep_kademlia_network_connection()
+        self.network_interface.start_listening()
 
     def get_all_songs(self) -> tuple[list[SongMetadataDto], list[RemoteNode]]:
         nodes: list[RemoteNode] = self._search_all_nodes()
@@ -85,6 +86,7 @@ class KademliaNode:
     def store_song(self, song: SongDto) -> tuple[bool, list[RemoteNode]]:
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
+        print(f"the nearest nodes to song {song} are {nearest}")
 
         local_save = True
         # TODO improve this using hierarchy of nodes
@@ -96,6 +98,9 @@ class KademliaNode:
 
         with ThreadPoolExecutor(ALPHA) as executor:
             results = executor.map(lambda node: node.save_key(song), nearest)
+
+        for n in results:
+            print("Saved song in node" if n else "Failed to save song in node")
 
         return local_save or any(results), self.finger_table.get_active_nodes(
             K_BUCKET_SIZE
@@ -188,6 +193,9 @@ class KademliaNode:
             else:
                 time.sleep(60)
 
+    def _keep_kademlia_network_connection(self):
+        threading.Thread(target=self._keep_connection_to_network, args=[]).start()
+
 
 class KademliaInterface:
     def __init__(self, node: KademliaNode):
@@ -208,6 +216,8 @@ class KademliaInterface:
         return [song.to_dict_metadata() for song in songs]
 
     def save_song(self, song: SongDto) -> bool:
+        if SongServices.exists_song(song.key):
+            return True
         uploaded = SongServices.upload_song(song)
         if uploaded:
             return True

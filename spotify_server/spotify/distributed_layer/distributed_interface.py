@@ -11,9 +11,12 @@ class DistributedInterface:
 
     def __new__(cls, *_, **__):
         if cls._instance is None:
+            print("Iniciando Kademlia Node")
             ip: str = socket.gethostbyname(socket.gethostname())
             cls._instance = super().__new__(cls)
             cls._distributed_node = KademliaNode(ip)
+        else:
+            print("Using singleton kademlia node")
         return cls._instance
 
     def search_song_streamers(
