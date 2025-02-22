@@ -74,6 +74,41 @@ app.use(
     changeOrigin: true,
   })
 );
+app.use(
+  "/172.0.13.5",
+  createProxyMiddleware({
+    target: "http://172.0.13.5:8000", // Dirección del backend
+    changeOrigin: true,
+  })
+);
+app.use(
+  "/172.0.13.6",
+  createProxyMiddleware({
+    target: "http://172.0.13.6:8000", // Dirección del backend
+    changeOrigin: true,
+  })
+);
+app.use(
+  "/172.0.13.7",
+  createProxyMiddleware({
+    target: "http://172.0.13.7:8000", // Dirección del backend
+    changeOrigin: true,
+  })
+);
+app.use(
+  "/172.0.13.8",
+  createProxyMiddleware({
+    target: "http://172.0.13.8:8000", // Dirección del backend
+    changeOrigin: true,
+  })
+);
+app.use(
+  "/172.0.13.9",
+  createProxyMiddleware({
+    target: "http://172.0.13.9:8000", // Dirección del backend
+    changeOrigin: true,
+  })
+);
 // Proxy para redirigir todo lo demás al frontend
 // app.use(
 //   "/",
