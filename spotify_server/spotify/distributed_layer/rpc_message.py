@@ -41,6 +41,12 @@ class RpcRequest(Encodable):
         except (json.JSONDecodeError, KeyError):
             return None
 
+    def __str__(self) -> str:
+        return f"Function: {self.function} with arguments: {self.arguments}"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
 
 class RpcResponse(Encodable):
     def __init__(self, result):

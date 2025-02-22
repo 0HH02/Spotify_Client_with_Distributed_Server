@@ -53,6 +53,7 @@ docker network connect --ip 172.0.12.254 $CLIENT_NETWORK $ROUTER_CONTAINER
 docker network connect --ip 172.0.13.254 $SERVER_NETWORK $ROUTER_CONTAINER
 
 
+
 #Client Container Configuration
 
 CLIENT_IMAGE="react_client_img"
