@@ -41,7 +41,6 @@ class KademliaNode:
 
         # TODO improve this using hierarchy of nodes
         for song in self.kademlia_interface.get_all_metadata():
-            print(song)
             songs.add(SongMetadataDto.from_dict(song))
 
         return list(songs), self.finger_table.get_active_nodes(K_BUCKET_SIZE)

@@ -16,14 +16,11 @@ class ServerManager {
 
   private async isServerAvailable(server: string): Promise<boolean> {
     const controller = new AbortController(); // Crea una instancia de AbortController
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // Establece un timeout de 3 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 1000); // Establece un timeout de 1 segundos
 
     try {
-      const response = await fetch(`${server}/api/songs`, {
-        method: "HEAD",
-        signal: controller.signal, // Asigna el signal del AbortController
-      });
-      return response.ok; // Retorna true si la respuesta es correcta
+      const response = await axios.get(`${server}/api/songs/`);
+      return response.data != null; // Retorna true si la respuesta es correcta
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
@@ -60,13 +57,17 @@ class ServerManager {
     artistName: string
   ): Promise<boolean> {
     const server = await this.getAvailableServer();
+    console.log(server);
     const servers = (
       await axios.get(
         `${server}/api/findStreamers/?song_id=${songName}-${artistName}`
       )
     ).data.data.streamers;
+    console.log(servers);
     for (let index = 0; index < servers.length; index++) {
-      this.streamersServers.push(servers[index]["ip"]);
+      this.streamersServers.push(
+        `http://localhost:4000/${servers[index]["ip"]}`
+      );
       console.log(servers[index]["ip"] + " agregado");
     }
     return servers.length > 0;
@@ -105,4 +106,9 @@ class ServerManager {
   }
 }
 
-export default new ServerManager(["http://172.0.13.2:8000","http://172.0.13.3:8000","http://172.0.13.4:8000","http://172.0.13.5:8000","http://172.0.13.6:8000","http://172.0.13.7:8000","http://172.0.13.8:8000"]);
+export default new ServerManager([
+  "http://localhost:4000/172.0.13.2",
+  "http://localhost:4000/172.0.13.3",
+  "http://localhost:4000/172.0.13.4",
+  "http://localhost:4000/172.0.13.5",
+]);

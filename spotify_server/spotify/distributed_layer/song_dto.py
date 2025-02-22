@@ -33,7 +33,11 @@ class ImageSongDto:
 
     @staticmethod
     def from_dict(data: dict):
-        return ImageSongDto(data["file_extension"], data["image_data"])
+        try:
+            return ImageSongDto(data["file_extension"], data["image_data"])
+        except KeyError:
+            print("Error al crear el objeto ImageSongDto with")
+            return None
 
     def to_dict(self) -> dict:
         return {"file_extension": self.file_extension, "image_data": self.image_data}
@@ -63,19 +67,22 @@ class SongDto:
     @staticmethod
     def from_dict(data: dict):
         try:
-            return SongDto(
+            song = SongDto(
                 title=data["title"],
                 artist=data["artist"],
                 album=data["album"],
-                genre=data["genre"],
+                genre=data["genre"] if "genre" in data.keys() else "unknown",
                 duration=data["duration"],
                 size=data["size"],
                 image=ImageSongDto.from_dict(data["image"]),
                 audio_data=data["audio_data"],
             )
-        except KeyError:
-            print(f"Error al crear el objeto SongDto with {data}")
+            return song
+        except Exception as e:
+            print(f"Error al crear el objeto SongDto with : {e}")
             return None
+    
+
 
     def to_dict(self) -> dict:
         return {
@@ -132,7 +139,7 @@ class SongMetadataDto:
                 image_url=data["image"],
             )
         except KeyError:
-            print(f"Error al crear el objeto SongMetadataDto with {data}")
+            print(f"Error al crear el objeto SongMetadataDto with ")
             return None
 
     def to_dict(self) -> dict:

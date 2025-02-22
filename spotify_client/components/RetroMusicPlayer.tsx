@@ -177,7 +177,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
       // 2. Si sí está bufferizado, aplicas la lógica que ya tenías de "descarga si me estoy quedando sin buffer"
       const bufferEnd =
         srcBuffer.buffered.length > 0 ? srcBuffer.buffered.end(0) : 0;
-      if (!isFetchingRef.current && bufferEnd - nowTime < 5) {
+      if (!isFetchingRef.current && bufferEnd - nowTime < 10) {
         const lastChunkIndex =
           chunkListRef.current.length > 0
             ? chunkListRef.current[chunkListRef.current.length - 1].index
