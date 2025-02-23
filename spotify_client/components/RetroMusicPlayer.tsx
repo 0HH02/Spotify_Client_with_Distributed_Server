@@ -4,7 +4,9 @@ import { motion } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward } from "lucide-react";
 import serverManager from "../middleware/ServerManager";
 import Image from "next/image";
+import { getSongChunk, cacheSongChunk } from "./CacheManager";
 import { time } from "console";
+import next from "next";
 
 const CHUNK_SIZE = 1024 * 512; // 512 KB chunk size
 
@@ -208,35 +210,47 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
       const rangeStart = chunkIndex * CHUNK_SIZE;
       const rangeEnd = (chunkIndex + 1) * CHUNK_SIZE - 1;
 
-      // Middleware para manejar el stream
-      const chunk = await serverManager.fetchStream(
-        currentSong.title,
-        currentSong.artist,
-        rangeStart,
-        rangeEnd
-      );
+      let chunk: Uint8Array | undefined;
+      const songId = `${currentSong.title}-${currentSong.artist}`;
 
-      if (!chunk) {
-        console.warn("No se pudo cargar el chunk, intentando de nuevo...");
-        return await fetchAndAppendChunk(srcBuffer, chunkIndex, mediaSrc);
+      // Verifica si el chunk ya está en la caché
+      chunk = getSongChunk(songId, chunkIndex);
+      if (chunk) {
+        console.log("Chunk encontrado en caché:", chunkIndex);
+      } else {
+        // Middleware para manejar el stream
+        const chunkData = await serverManager.fetchStream(
+          currentSong.title,
+          currentSong.artist,
+          rangeStart,
+          rangeEnd
+        );
+
+        if (!chunkData) {
+          console.warn("No se pudo cargar el chunk, intentando de nuevo...");
+          return await fetchAndAppendChunk(srcBuffer, chunkIndex, mediaSrc);
+        }
+
+        // Guarda el chunk en caché
+        cacheSongChunk(songId, chunkIndex, new Uint8Array(chunkData));
+
+        // Espera a que el SourceBuffer termine de actualizarse
+        await new Promise<void>((resolve) => {
+          if (!srcBuffer.updating) resolve();
+          else
+            srcBuffer.addEventListener("updateend", () => resolve(), {
+              once: true,
+            });
+        });
+
+        srcBuffer.appendBuffer(chunkData);
+
+        setChunkList((prev) => {
+          const updatedChunks = [...prev, { index: chunkIndex }];
+          chunkListRef.current = updatedChunks;
+          return updatedChunks;
+        });
       }
-
-      // Espera a que el SourceBuffer termine de actualizarse
-      await new Promise<void>((resolve) => {
-        if (!srcBuffer.updating) resolve();
-        else
-          srcBuffer.addEventListener("updateend", () => resolve(), {
-            once: true,
-          });
-      });
-
-      srcBuffer.appendBuffer(chunk);
-
-      setChunkList((prev) => {
-        const updatedChunks = [...prev, { index: chunkIndex }];
-        chunkListRef.current = updatedChunks;
-        return updatedChunks;
-      });
     } catch (error) {
       console.error("Error al cargar el chunk:", error);
     } finally {
@@ -258,30 +272,39 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
 
   const handleNextSong = () => {
     if (!songs || songs.length === 0) return;
-    const currentIndex = songs.findIndex((song) => song.id === currentSongId);
+    const currentIndex = songs.findIndex(
+      (song) =>
+        song.title === currentSongId.split("-")[0] &&
+        song.artist === currentSongId.split("-")[1]
+    );
+    console.log(songs[currentIndex + 1]);
 
     if (currentIndex >= 0 && currentIndex < songs.length - 1) {
       const nextSong = songs[currentIndex + 1];
-      onSongSelect(nextSong.id);
+      onSongSelect(nextSong.title + "-" + nextSong.artist);
       setIsPlaying(true); // Reproducir automáticamente
     } else {
       const firstSong = songs[0];
-      onSongSelect(firstSong.id);
+      onSongSelect(firstSong.title + "-" + firstSong.artist);
       setIsPlaying(true);
     }
   };
 
   const handlePreviousSong = () => {
     if (!songs || songs.length === 0) return;
-    const currentIndex = songs.findIndex((song) => song.id === currentSongId);
+    const currentIndex = songs.findIndex(
+      (song) =>
+        song.title === currentSongId.split("-")[0] &&
+        song.artist === currentSongId.split("-")[1]
+    );
 
     if (currentIndex > 0) {
       const prevSong = songs[currentIndex - 1];
-      onSongSelect(prevSong.id);
+      onSongSelect(prevSong.title + "-" + prevSong.artist);
       setIsPlaying(true); // Reproducir automáticamente
     } else {
       const lastSong = songs[songs.length - 1];
-      onSongSelect(lastSong.id);
+      onSongSelect(lastSong.title + "-" + lastSong.artist);
       setIsPlaying(true);
     }
   };
