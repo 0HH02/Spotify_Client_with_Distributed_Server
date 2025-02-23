@@ -23,8 +23,8 @@ class KademliaNode:
         self.finger_table = FingerTable(self)
         self.kademlia_interface = KademliaInterface(self)
         self.connected = False
-        self._keep_kademlia_network_connection()
         self.network_interface.start_listening()
+        self._keep_kademlia_network_connection()
 
     def get_all_songs(self) -> tuple[list[SongMetadataDto], list[RemoteNode]]:
         nodes: list[RemoteNode] = self._search_all_nodes()
@@ -180,18 +180,22 @@ class KademliaNode:
         return nodes
 
     def _keep_connection_to_network(self):
+        print("Starting to keep connection to network")
         while True:
             if len(self.finger_table.get_active_nodes(10)) < 3:
                 discovered_nodes: list[RemoteNode] = (
                     self.network_interface.discover_nodes()
                 )
+                print("Discovered nodes", discovered_nodes)
                 if discovered_nodes:
                     for node in discovered_nodes:
                         self.finger_table.add_node(node)
 
                 time.sleep(20)
+                print("Waiting 20 seconds to discover new nodes")
             else:
                 time.sleep(60)
+                print("Waiting 60 seconds to discover new nodes")
 
     def _keep_kademlia_network_connection(self):
         threading.Thread(target=self._keep_connection_to_network, args=[]).start()

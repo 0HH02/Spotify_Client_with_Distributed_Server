@@ -2,7 +2,6 @@ import socket
 import ssl
 import time
 import threading
-import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
 
@@ -17,6 +16,7 @@ class NetworkInterface:
         self.listening: bool = False
 
     def _listen_new_nodes_request(self):
+        print("listening to new nodes requests")
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(("0.0.0.0", 1728))
@@ -26,19 +26,37 @@ class NetworkInterface:
                 print(
                     f"node {node_id} with ip: {addr[0]} is requesting to join to the network"
                 )
-                if len(node_id) == 160 and all(n in ["0", "1"] for n in node_id):
-                    sock.sendto(self.node.id, addr)
-                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-                        sock.connect((self.node.ip, 1729))
-                        sock.sendall(
-                            RpcRequest(
-                                int(node_id),
-                                RemoteFunctions.PING.value,
-                                [],
-                            )
+                bin_node_id = bin(int(node_id))
+                if len(bin_node_id) == 160:
+                    print("node_id is valid")
+                    sender_id = str(self.node.id)
+                    sock.sendto(sender_id.encode(), addr)
+                    try:
+                        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                        context.check_hostname = False
+                        context.load_verify_locations(
+                            "./spotify/distributed_layer/cert.pem",
                         )
+                        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as tsock:
+                            with context.wrap_socket(tsock) as ssock:
+                                ssock.settimeout(5)
+                                ssock.connect((self.node.ip, 1729))
+                                ssock.sendall(
+                                    RpcRequest(
+                                        node_id,
+                                        RemoteFunctions.PING.value,
+                                        [],
+                                    ).encode()
+                                )
+                    except ConnectionRefusedError:
+                        print("Node tcp server is not up")
+                    except socket.timeout:
+                        print("Timeout sending ping request to myself")
+                else:
+                    print("node_id is invalid")
 
     def _listen(self):
+        print(f"starting listening in ip: {self.node.ip}")
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(
             certfile="./spotify/distributed_layer/cert.pem",
@@ -46,7 +64,6 @@ class NetworkInterface:
         )
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as listening_socket:
-            print(f"starting listening in ip: {self.node.ip}")
             listening_socket.bind(("0.0.0.0", 1729))
             listening_socket.listen(10)
             with context.wrap_socket(
@@ -60,7 +77,7 @@ class NetworkInterface:
     def start_listening(self):
         self.listening = True
         threading.Thread(target=self._listen, args=[]).start()
-        multiprocessing.Process(target=self._listen_new_nodes_request, args=[]).start()
+        threading.Thread(target=self._listen_new_nodes_request, args=[]).start()
 
     def stop_listening(self):
         self.listening = False
@@ -75,8 +92,11 @@ class NetworkInterface:
 
                 print("requesting to joining the network")
                 sock.sendto(message.encode(), ("255.255.255.255", 1728))
+                print("sended broadcast")
                 initial_time: float = time.time()
                 while time.time() - initial_time < 5:
+                    sock.settimeout(5)
+                    print("waiting for nodes responses")
                     data, addr = sock.recvfrom(1024)
                     node_id: str = data.decode()
                     print(f"node {node_id} answer the join network request")
@@ -86,6 +106,7 @@ class NetworkInterface:
         except socket.timeout:
             print("Timeout sending discover broadcast")
 
+        print("Ended discovering")
         return discovered_nodes
 
     def handle_connection(self, conn: socket.socket, addr: tuple[str, str]):

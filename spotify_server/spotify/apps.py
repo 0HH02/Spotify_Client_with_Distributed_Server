@@ -11,6 +11,7 @@ class SpotifyConfig(AppConfig):
     name = "spotify"
 
     def ready(self):
+        print("Initializing Spotify")
         lock_file_path = "./tmp/startup_lock"
         try:
             from .distributed_layer.distributed_interface import DistributedInterface

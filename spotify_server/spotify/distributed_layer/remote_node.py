@@ -26,6 +26,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
@@ -65,6 +66,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
@@ -104,6 +106,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
@@ -141,6 +144,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
@@ -180,6 +184,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
@@ -219,6 +224,7 @@ class RemoteNode:
         while True:
             try:
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
                 context.load_verify_locations("cert.pem")
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
