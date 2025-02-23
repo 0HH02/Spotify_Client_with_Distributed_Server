@@ -34,10 +34,10 @@ export default function Home() {
   const fetchAllSongs = async () => {
     setLoading(true);
     try {
-      const server = await serverManager.getAvailableServer("none", "none");
+      const server = await serverManager.getAvailableServer();
       const response = await axios.get(`${server}/api/songs/`);
       console.log(response.data.data);
-      const apiSongs = response.data.data.map((song: Song) => ({
+      const apiSongs = response.data.data.songs.map((song: Song) => ({
         title: song.title,
         artist: song.artist,
         genre: song.genre,
@@ -60,18 +60,21 @@ export default function Home() {
     setLoading(true);
     try {
       const searchBy = type === "all" ? "title" : type;
-      const server = await serverManager.getAvailableServer("none", "none");
+      const server = await serverManager.getAvailableServer();
       const response = await axios.get(
         `${server}/api/search/?searchBy=${searchBy}&query=${encodeURIComponent(
           term
         )}`
       );
-      const apiSongs = response.data.data.map((song: Song) => ({
+      console.log(response.data.data);
+      const apiSongs = response.data.data.songs.map((song: Song) => ({
         title: song.title,
         artist: song.artist,
         genre: song.genre,
         album: song.album,
-        coverUrl: "default_image.jpg",
+        coverUrl: `${server}${song.image}`,
+        duration: song.duration,
+        fileSize: song.size,
       }));
       setSongs(apiSongs);
       if (apiSongs.length > 0) setCurrentSongId(apiSongs[0].id);

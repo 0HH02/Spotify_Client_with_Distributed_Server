@@ -4,7 +4,7 @@ spotify_client/env/*
 !spotify_client/media/.gitignore
 
 spotify_server/media/*
-spotify_server/env/*
+spotify_server/venv/*
 !spotify_server/media/.gitignore
 
 

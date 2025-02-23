@@ -56,6 +56,7 @@ class FingerTable:
     def get_k_closets_nodes(self, key: int, k: int) -> list[RemoteNode]:
         closest_nodes: list[RemoteNode] = []
         distance_bit: int = self.get_bit_distance(key)
+        print(distance_bit)
 
         for remote_node in self.buckets[distance_bit].nodes:
             heappush(closest_nodes, (-(remote_node.id ^ key), remote_node))

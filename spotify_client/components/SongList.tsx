@@ -11,6 +11,7 @@ import {
 } from "lucide-react"; // Importar ArrowLeft
 import serverManager from "@/middleware/ServerManager";
 import Image from "next/image";
+import axios from "axios";
 
 interface Song {
   id: string;
@@ -57,24 +58,23 @@ export const SongList: React.FC<SongListProps> = ({
       try {
         const formData = new FormData();
         formData.append("file", file); // 'file' es el nombre esperado por el servidor
-        const server = await serverManager.getAvailableServer("none", "none");
-        const response = await fetch(`${server}/api/upload/`, {
-          method: "POST",
-          body: formData,
+        const server = await serverManager.getAvailableServer();
+
+        const response = await axios.post(`${server}/api/upload/`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
         });
 
-        if (response.ok) {
-          alert("Archivo subido correctamente.");
-          onSongUpload(file); // Actualiza el estado local
-        } else {
-          const errorData = await response.json();
-          alert(
-            `Error en la subida: ${errorData.message || "Error desconocido"}`
-          );
-        }
+        alert("Archivo subido correctamente.");
+        onSongUpload(file); // Actualiza el estado local
       } catch (error) {
         console.error("Error al subir el archivo:", error);
-        alert("Ocurrió un error al subir el archivo.");
+        alert(
+          `Error en la subida: ${
+            (error as any).response?.data?.message || "Error desconocido"
+          }`
+        );
       }
     } else {
       alert("Por favor, selecciona un archivo MP3 válido.");

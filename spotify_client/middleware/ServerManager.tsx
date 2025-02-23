@@ -1,9 +1,12 @@
+import axios from "axios";
 class ServerManager {
   private servers: string[];
+  private streamersServers: string[];
   private currentServerIndex: number;
 
   constructor(servers: string[]) {
     this.servers = servers; // Lista de servidores disponibles
+    this.streamersServers = [];
     this.currentServerIndex = 0; // Iniciar con el primer servidor
   }
 
@@ -13,14 +16,11 @@ class ServerManager {
 
   private async isServerAvailable(server: string): Promise<boolean> {
     const controller = new AbortController(); // Crea una instancia de AbortController
-    const timeoutId = setTimeout(() => controller.abort(), 3000); // Establece un timeout de 3 segundos
+    const timeoutId = setTimeout(() => controller.abort(), 1000); // Establece un timeout de 1 segundos
 
     try {
-      const response = await fetch(`${server}/api/songs`, {
-        method: "HEAD",
-        signal: controller.signal, // Asigna el signal del AbortController
-      });
-      return response.ok; // Retorna true si la respuesta es correcta
+      const response = await axios.get(`${server}/api/songs/`);
+      return response.data != null; // Retorna true si la respuesta es correcta
     } catch (error) {
       if (error instanceof Error) {
         if (error.name === "AbortError") {
@@ -38,22 +38,10 @@ class ServerManager {
   }
 
   // Devuelve el primer servidor disponible en tiempo real
-  async getAvailableServer(
-    songName: string,
-    artistName: string
-  ): Promise<string | null> {
+  async getAvailableServer(): Promise<string | null> {
     for (let i = 0; i < this.servers.length; i++) {
       const server = this.servers[i];
       if (await this.isServerAvailable(server)) {
-        const servers = await fetch(
-          `${server}/api/findStreamers/?song_id=${songName}-${artistName}`
-        );
-        console.log("servers");
-        console.log(servers);
-        console.log("song Name y artist name");
-        console.log(songName);
-        console.log(artistName);
-
         this.currentServerIndex = i; // Actualizamos el índice del servidor actual
         console.log(`Servidor disponible: ${server}`);
         return server;
@@ -64,14 +52,38 @@ class ServerManager {
     return null;
   }
 
+  async findStreamersServers(
+    songName: string,
+    artistName: string
+  ): Promise<boolean> {
+    const server = await this.getAvailableServer();
+    console.log(server);
+    const servers = (
+      await axios.get(
+        `${server}/api/findStreamers/?song_id=${songName}-${artistName}`
+      )
+    ).data.data.streamers;
+    console.log(servers);
+    for (let index = 0; index < servers.length; index++) {
+      this.streamersServers.push(
+        `http://localhost:4000/${servers[index]["ip"]}`
+      );
+      console.log(servers[index]["ip"] + " agregado");
+    }
+    return servers.length > 0;
+  }
+
   async fetchStream(
     songName: string,
     artistName: string,
     rangeStart: number,
     rangeEnd: number
   ): Promise<ArrayBuffer | null> {
-    const server = await this.getAvailableServer(songName, artistName);
-    if (server) {
+    if (!(await this.findStreamersServers(songName, artistName))) {
+      console.log("No se encontraron servidores con la canción");
+      return null;
+    }
+    for (const server of this.streamersServers) {
       const url = `${server}/api/stream/?song_id=${songName}-${artistName}`;
       console.log(`downloading: bytes=${rangeStart}-${rangeEnd}`);
       try {
@@ -85,15 +97,18 @@ class ServerManager {
           return await response.arrayBuffer(); // Devuelve el chunk de datos
         } else {
           console.error(`Error ${response.status} al cargar desde ${url}`);
-          return null;
         }
       } catch (error) {
         console.error(`Error al conectar con ${url}:`, error);
-        return null;
       }
     }
     return null;
   }
 }
 
-export default new ServerManager(["http://172.0.13.2:8000","http://172.0.13.3:8000","http://172.0.13.4:8000","http://172.0.13.5:8000","http://172.0.13.6:8000","http://172.0.13.7:8000","http://172.0.13.8:8000"]);
+export default new ServerManager([
+  "http://localhost:4000/172.0.13.2",
+  "http://localhost:4000/172.0.13.3",
+  "http://localhost:4000/172.0.13.4",
+  "http://localhost:4000/172.0.13.5",
+]);

@@ -76,7 +76,7 @@ if [ $? -eq 0 ]; then
     echo "client container removed."    
 fi
 
-docker run -d --name $CLIENT_CONTAINER -p 3000:3000 -v $(pwd)/$CLIENT_FOLDER:/app --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
+docker run -d --name $CLIENT_CONTAINER -p 3000:3000 -p 4000:4000 -v $(pwd)/$CLIENT_FOLDER:/app --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
 echo "client container executed."
 
 
