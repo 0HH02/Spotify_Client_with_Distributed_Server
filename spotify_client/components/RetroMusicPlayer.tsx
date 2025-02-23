@@ -217,6 +217,21 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
       chunk = getSongChunk(songId, chunkIndex);
       if (chunk) {
         console.log("Chunk encontrado en caché:", chunkIndex);
+        // Espera a que el SourceBuffer termine de actualizarse
+        await new Promise<void>((resolve) => {
+          if (!srcBuffer.updating) resolve();
+          else
+            srcBuffer.addEventListener("updateend", () => resolve(), {
+              once: true,
+            });
+        });
+        // Carga el chunk cacheado en el buffer
+        srcBuffer.appendBuffer(chunk);
+        setChunkList((prev) => {
+          const updatedChunks = [...prev, { index: chunkIndex }];
+          chunkListRef.current = updatedChunks;
+          return updatedChunks;
+        });
       } else {
         // Middleware para manejar el stream
         const chunkData = await serverManager.fetchStream(
@@ -231,8 +246,9 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           return await fetchAndAppendChunk(srcBuffer, chunkIndex, mediaSrc);
         }
 
-        // Guarda el chunk en caché
-        cacheSongChunk(songId, chunkIndex, new Uint8Array(chunkData));
+        // Convierte y guarda el chunk en caché
+        const newChunk = new Uint8Array(chunkData);
+        cacheSongChunk(songId, chunkIndex, newChunk);
 
         // Espera a que el SourceBuffer termine de actualizarse
         await new Promise<void>((resolve) => {
@@ -242,8 +258,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
               once: true,
             });
         });
-
-        srcBuffer.appendBuffer(chunkData);
+        srcBuffer.appendBuffer(newChunk);
 
         setChunkList((prev) => {
           const updatedChunks = [...prev, { index: chunkIndex }];

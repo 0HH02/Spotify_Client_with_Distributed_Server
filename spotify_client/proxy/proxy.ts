@@ -115,6 +115,7 @@ app.use(
 //   createProxyMiddleware({
 //     target: "http://localhost:3000", // Dirección del frontend
 //     changeOrigin: true,
+secure: true;
 //   })
 // );
 
@@ -122,3 +123,4 @@ const PORT = 4000;
 app.listen(PORT, () => {
   console.log(`🔄 Proxy corriendo en http://localhost:${PORT}`);
 });
+secure: true;
