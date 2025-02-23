@@ -3,6 +3,7 @@ import socket
 from spotify.distributed_layer.remote_node import RemoteNode
 from .kademlia_node import KademliaNode
 from .song_dto import SongKey, SongMetadataDto, SongDto
+from ..logs import write_log
 
 
 class DistributedInterface:
@@ -11,12 +12,12 @@ class DistributedInterface:
 
     def __new__(cls, *_, **__):
         if cls._instance is None:
-            print("Iniciando Kademlia Node")
+            write_log("Iniciando Kademlia Node")
             ip: str = socket.gethostbyname(socket.gethostname())
             cls._instance = super().__new__(cls)
             cls._distributed_node = KademliaNode(ip)
         else:
-            print("Using singleton kademlia node")
+            write_log("Using singleton kademlia node")
         return cls._instance
 
     def search_song_streamers(

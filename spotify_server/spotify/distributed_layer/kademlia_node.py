@@ -11,6 +11,7 @@ from .finger_table import FingerTable, K_BUCKET_SIZE
 from .song_dto import SongDto, SongKey, SongMetadataDto
 
 from ..services.song_services import SongServices
+from ..logs import write_log
 
 ALPHA = 5
 
@@ -32,7 +33,7 @@ class KademliaNode:
         lock = threading.Lock()
 
         def _get_songs_from_node(node: RemoteNode):
-            songs_from_node = node.get_all_keys()
+            songs_from_node = node.get_all_keys(self.id)
             if songs_from_node:
                 with lock:
                     songs.update(songs_from_node)
@@ -54,7 +55,7 @@ class KademliaNode:
         lock = threading.Lock()
 
         def _search_songs_by_from_node(node: RemoteNode):
-            songs_from_node = node.get_keys_by_query(search_by, query)
+            songs_from_node = node.get_keys_by_query(self.id, search_by, query)
             with lock:
                 songs.update(songs_from_node)
 
@@ -85,7 +86,7 @@ class KademliaNode:
     def store_song(self, song: SongDto) -> tuple[bool, list[RemoteNode]]:
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
-        print(f"the nearest nodes to song {song} are {nearest}")
+        write_log(f"the nearest nodes to song {song} are {nearest}")
 
         local_save = True
         # TODO improve this using hierarchy of nodes
@@ -96,10 +97,10 @@ class KademliaNode:
             self.kademlia_interface.save_song(song)
 
         with ThreadPoolExecutor(ALPHA) as executor:
-            results = executor.map(lambda node: node.save_key(song), nearest)
+            results = executor.map(lambda node: node.save_key(self.id, song), nearest)
 
         for n in results:
-            print("Saved song in node" if n else "Failed to save song in node")
+            write_log("Saved song in node" if n else "Failed to save song in node")
 
         return local_save or any(results), self.finger_table.get_active_nodes(
             K_BUCKET_SIZE
@@ -130,7 +131,7 @@ class KademliaNode:
             with lock:
                 current: RemoteNode = pending.pop()
                 already_queried.add(current)
-            new_nodes: list[RemoteNode] | None = current.get_nears_node(key)
+            new_nodes: list[RemoteNode] | None = current.get_nears_node(self.id, key)
             if new_nodes:
                 for remote_node in new_nodes:
                     with lock:
@@ -179,22 +180,22 @@ class KademliaNode:
         return nodes
 
     def _keep_connection_to_network(self):
-        print("Starting to keep connection to network")
+        write_log("Starting to keep connection to network")
         while True:
             if len(self.finger_table.get_active_nodes(10)) < 3:
                 discovered_nodes: list[RemoteNode] = (
                     self.network_interface.discover_nodes()
                 )
-                print("Discovered nodes", discovered_nodes)
+                write_log(f"Discovered nodes {discovered_nodes}")
                 if discovered_nodes:
                     for node in discovered_nodes:
                         self.finger_table.add_node(node)
 
                 time.sleep(20)
-                print("Waiting 20 seconds to discover new nodes")
+                write_log("Waiting 20 seconds to discover new nodes")
             else:
                 time.sleep(60)
-                print("Waiting 60 seconds to discover new nodes")
+                write_log("Waiting 60 seconds to discover new nodes")
 
     def _keep_kademlia_network_connection(self):
         threading.Thread(target=self._keep_connection_to_network, args=[]).start()

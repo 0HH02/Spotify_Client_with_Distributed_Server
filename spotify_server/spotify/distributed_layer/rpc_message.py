@@ -33,7 +33,7 @@ class RpcRequest(Encodable):
         try:
             json_data = json.loads(data.decode())
             request = RpcRequest(
-                sender_id=json_data["sender_id"],
+                sender_id=json_data["id"],
                 function=json_data["function"],
                 arguments=json_data["arguments"],
             )
