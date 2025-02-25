@@ -390,7 +390,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           className="relative aspect-square mb-8 overflow-hidden rounded-lg"
         >
           <Image
-            src={currentSong.coverUrl || "https://via.placeholder.com/300"}
+            src={currentSong.coverUrl || "/default_image.jpg"}
             alt={`${currentSong.title || "No song loaded"} cover`}
             width={300} // Ancho requerido
             height={300} // Alto requerido
@@ -404,7 +404,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           transition={{ delay: 0.2, duration: 0.5 }}
           className="text-3xl font-bold text-white mb-2 truncate text-center"
         >
-          {currentSong.title || "Loading..."}
+          {currentSong.title || ""}
         </motion.h2>
         <motion.p
           initial={{ y: -20, opacity: 0 }}
@@ -412,7 +412,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           transition={{ delay: 0.3, duration: 0.5 }}
           className="text-purple-200 mb-6 text-center"
         >
-          {currentSong.artist || "Loading..."}
+          {currentSong.artist || ""}
         </motion.p>
         <div className="flex items-center justify-between mb-4">
           <span className="text-purple-200 text-sm">
