@@ -28,6 +28,7 @@ class KademliaNode:
         self._keep_kademlia_network_connection()
 
     def get_all_songs(self) -> tuple[list[SongMetadataDto], list[RemoteNode]]:
+        write_log("Getting all songs", 1)
         nodes: list[RemoteNode] = self._search_all_nodes()
         songs: set[SongMetadataDto] = set()
         lock = threading.Lock()
@@ -35,6 +36,7 @@ class KademliaNode:
         def _get_songs_from_node(node: RemoteNode):
             songs_from_node = node.get_all_keys(self.id)
             if songs_from_node:
+                write_log(f"Got {len(songs_from_node)} songs from node {node}", 1)
                 with lock:
                     songs.update(songs_from_node)
 
@@ -71,6 +73,7 @@ class KademliaNode:
     def search_song_streamers(
         self, song_key: SongKey
     ) -> tuple[list[RemoteNode], list[RemoteNode]]:
+        write_log(f"Searching song streamers, for key: {song_key}", 1)
         key: int = sha1_hash(str(song_key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
 
@@ -81,12 +84,13 @@ class KademliaNode:
             nearest.pop()
             nearest.append(RemoteNode(self.ip, self.id))
 
-        return nearest, self.finger_table.get_all_nodes()
+        return nearest, self.finger_table.get_active_nodes(K_BUCKET_SIZE)
 
     def store_song(self, song: SongDto) -> tuple[bool, list[RemoteNode]]:
+        write_log(f"storing song,{song}", 1)
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
-        write_log(f"the nearest nodes to song {song} are {nearest}")
+        write_log(f"the nearest nodes to song {song} are {nearest}", 1)
 
         local_save = True
         # TODO improve this using hierarchy of nodes
@@ -100,7 +104,7 @@ class KademliaNode:
             results = executor.map(lambda node: node.save_key(self.id, song), nearest)
 
         for n in results:
-            write_log("Saved song in node" if n else "Failed to save song in node")
+            write_log("Saved song in node" if n else "Failed to save song in node", 1)
 
         return local_save or any(results), self.finger_table.get_active_nodes(
             K_BUCKET_SIZE
@@ -118,6 +122,7 @@ class KademliaNode:
         return SongServices.exists_song(key)
 
     def _search_k_nearest(self, key: int, k: int = K_BUCKET_SIZE):
+        write_log(f"Searching k nearest nodes to key {key}", 1)
         nearest: list[RemoteNode] = []
         pending: set[RemoteNode] = set()
         already_queried: set[RemoteNode] = set()
@@ -146,9 +151,13 @@ class KademliaNode:
             with ThreadPoolExecutor(ALPHA) as executor:
                 executor.map(_get_nears_node, range(ALPHA))
 
-        return [heappop(nearest)[1] for _ in range(min(k, len(nearest)))]
+        result = [heappop(nearest)[1] for _ in range(min(k, len(nearest)))]
+        write_log(f"The nearest nodes are {result}", 1)
+
+        return result
 
     def _search_all_nodes(self):
+        write_log("Searching all nodes", 1)
         nodes: list[RemoteNode] = []
         pendings: set[RemoteNode] = set()
         already_queried: set[RemoteNode] = set()
@@ -177,6 +186,7 @@ class KademliaNode:
             with ThreadPoolExecutor(ALPHA) as executor:
                 executor.map(_get_all_nodes_from_remote, range(ALPHA))
 
+        write_log(f"Found {len(nodes)} nodes", 1)
         return nodes
 
     def _keep_connection_to_network(self):
