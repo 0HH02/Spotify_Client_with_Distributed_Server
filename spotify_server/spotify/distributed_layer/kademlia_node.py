@@ -132,7 +132,7 @@ class KademliaNode:
             heappush(nearest, (-(remote_node.id ^ key), remote_node))
             pending.add(remote_node)
 
-        def _get_nears_node():
+        def _get_nears_node(_):
             with lock:
                 current: RemoteNode = pending.pop()
                 already_queried.add(current)
@@ -164,14 +164,20 @@ class KademliaNode:
         lock = threading.Lock()
 
         for remote_node in self.finger_table.get_all_nodes():
+            write_log(
+                f"Adding node {remote_node} to pending nodes from finger table", 1
+            )
             nodes.append(remote_node)
             pendings.add(remote_node)
 
-        def _get_all_nodes_from_remote():
+        def _get_all_nodes_from_remote(_):
+            write_log("Getting all nodes from remote", 1)
             with lock:
                 current: RemoteNode = pendings.pop()
+                write_log(f"Now gettings nodes from {current}", 1)
                 already_queried.add(current)
             new_nodes = current.get_all_nodes()
+            write_log(f"Got {len(new_nodes)} nodes from {current}", 1)
             if new_nodes:
                 for remote_node in new_nodes:
                     with lock:
@@ -179,6 +185,10 @@ class KademliaNode:
                             remote_node not in already_queried
                             and remote_node not in pendings
                         ):
+                            write_log(
+                                f"Adding node {remote_node} to pending nodes from discovered nodes",
+                                1,
+                            )
                             nodes.append(remote_node)
                             pendings.add(remote_node)
 

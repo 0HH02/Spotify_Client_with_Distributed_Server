@@ -27,6 +27,7 @@ class ListSongsMetadataView(APIView):
         Returns:
             Response: A Response object containing serialized song metadata and an HTTP 200 status code.
         """
+        print("Get all songs view called")
         distributed_interface = DistributedInterface()
         result, active_nodes = distributed_interface.get_all_songs()
 
