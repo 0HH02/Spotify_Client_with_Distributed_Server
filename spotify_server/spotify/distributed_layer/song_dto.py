@@ -140,7 +140,6 @@ class SongMetadataDto:
         duration: float,
         size: int,
         image_url: str,
-        ip:str,
     ):
         self.title: str = title
         self.artist: str = artist
@@ -149,7 +148,6 @@ class SongMetadataDto:
         self.duration: float = duration
         self.size: int = size
         self.image_url: str = image_url
-        self.ip: str = ip
 
     @staticmethod
     def from_dict(data: dict):
@@ -162,7 +160,6 @@ class SongMetadataDto:
                 duration=data["duration"],
                 size=data["size"],
                 image_url=data["image"],
-                ip = data["ip"]
             )
         except KeyError:
             write_log(f"Error al crear el objeto SongMetadataDto with {data}", 3)
@@ -181,7 +178,6 @@ class SongMetadataDto:
             "duration": self.duration,
             "size": self.size,
             "image": self.image_url,
-            "ip": self.ip
         }
 
     @property

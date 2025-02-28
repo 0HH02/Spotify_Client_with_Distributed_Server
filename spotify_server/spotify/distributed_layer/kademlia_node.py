@@ -257,7 +257,7 @@ class KademliaInterface:
         write_log(f"Got {len(songs)} songs metadata from services", 4)
         metadata = [song.to_dict_metadata() for song in songs]
         for s in metadata:
-            s["ip"] = self.node.ip
+            s["image"] = f"{self.node.ip}/{s['image']}"
         return metadata
 
     def get_k_nearest(self, key: int, k: int = K_BUCKET_SIZE) -> list[RemoteNode]:
@@ -267,7 +267,7 @@ class KademliaInterface:
         songs = SongServices.search_songs(search_by, query)
         metadata = [song.to_dict_metadata() for song in songs]
         for s in metadata:
-            s["ip"] = self.node.ip
+            s["image"] = f"{self.node.ip}/{s['image']}"
         write_log(f"Se encontraron {len(metadata)} canciones", 5)
         return metadata
 
