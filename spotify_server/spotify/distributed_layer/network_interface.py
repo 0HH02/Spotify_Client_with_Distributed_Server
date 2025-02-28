@@ -110,7 +110,7 @@ class NetworkInterface:
     ):
         try:
             conn.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 256)
-            conn.settimeout(2)
+            conn.settimeout(1)
             write_log(f"Received request of save song from {addr}", 1)
             conn.sendall(b"Ok")
             write_log("Sended Ok", 1)
@@ -173,6 +173,7 @@ class NetworkInterface:
                     return self._handle_receive_song(conn, addr, request)
 
                 response: RpcResponse = self.handle_request(request, addr)
+                write_log(f"Sending response {response} to {addr}", 4)
                 conn.sendall(response.encode())
             else:
                 write_log("Invalid request received")
@@ -210,7 +211,9 @@ class NetworkInterface:
                 return RpcResponse(self.node.kademlia_interface.save_song(song_dto))
 
         if request.function == RemoteFunctions.GET_ALL_KEYS.value:
-            return RpcResponse(self.node.kademlia_interface.get_all_metadata())
+            all_songs: list = self.node.kademlia_interface.get_all_songs()
+            write_log(f"Sending all songs {all_songs}", 4)
+            return RpcResponse(all_songs)
 
         if request.function == RemoteFunctions.GET_ALL_NODES.value:
             nodes = [n.to_dict() for n in self.node.kademlia_interface.get_all_nodes()]

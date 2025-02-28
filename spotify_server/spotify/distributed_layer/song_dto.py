@@ -25,7 +25,7 @@ class SongKey:
         return isinstance(value, SongKey) and str(self) == str(value)
 
     def __hash__(self):
-        return self.__str__().__hash__()
+        return hash(str(self))
 
 
 class ImageSongDto:
@@ -140,6 +140,7 @@ class SongMetadataDto:
         duration: float,
         size: int,
         image_url: str,
+        ip:str,
     ):
         self.title: str = title
         self.artist: str = artist
@@ -148,6 +149,7 @@ class SongMetadataDto:
         self.duration: float = duration
         self.size: int = size
         self.image_url: str = image_url
+        self.ip: str = ip
 
     @staticmethod
     def from_dict(data: dict):
@@ -160,9 +162,14 @@ class SongMetadataDto:
                 duration=data["duration"],
                 size=data["size"],
                 image_url=data["image"],
+                ip = data["ip"]
             )
         except KeyError:
             write_log(f"Error al crear el objeto SongMetadataDto with {data}", 3)
+            return None
+
+        except Exception as e:
+            write_log(f"Error al crear SongMetadataDto from dict :{e}", 3)
             return None
 
     def to_dict(self) -> dict:
@@ -174,6 +181,7 @@ class SongMetadataDto:
             "duration": self.duration,
             "size": self.size,
             "image": self.image_url,
+            "ip": self.ip
         }
 
     @property
@@ -181,7 +189,13 @@ class SongMetadataDto:
         return SongKey(self.title, self.artist)
 
     def __eq__(self, value):
-        return isinstance(value, SongDto) and self.key == value.key
+        return isinstance(value, SongMetadataDto) and self.key == value.key
 
     def __hash__(self):
-        return self.key.__hash__()
+        return hash(self.key)
+
+    def __str__(self):
+        return self.key.__str__()
+
+    def __repr__(self):
+        return self.__str__()

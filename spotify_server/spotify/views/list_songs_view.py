@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 
+
+from ..logs import write_log
 from ..distributed_layer.distributed_interface import DistributedInterface
 
 
@@ -27,7 +29,7 @@ class ListSongsMetadataView(APIView):
         Returns:
             Response: A Response object containing serialized song metadata and an HTTP 200 status code.
         """
-        print("Get all songs view called")
+        write_log("Getting all", 2)
         distributed_interface = DistributedInterface()
         result, active_nodes = distributed_interface.get_all_songs()
 

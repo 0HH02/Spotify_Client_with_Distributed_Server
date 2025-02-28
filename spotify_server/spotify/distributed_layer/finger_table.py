@@ -5,7 +5,7 @@ from .remote_node import RemoteNode
 
 from ..logs import write_log
 
-K_BUCKET_SIZE = 4
+K_BUCKET_SIZE = 3
 
 
 class KBucket:

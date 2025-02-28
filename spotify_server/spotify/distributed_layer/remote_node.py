@@ -33,7 +33,7 @@ class RemoteNode:
                 context.load_verify_locations("./spotify/distributed_layer/cert.pem")
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
-                        ssock.settimeout(10)
+                        ssock.settimeout(6)
 
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
@@ -110,31 +110,40 @@ class RemoteNode:
                         request = RpcRequest(
                             sender_id,
                             RemoteFunctions.GET_KEYS_BY_QUERY.value,
-                            [query, search_by],
+                            [search_by, query],
                         )
                         ssock.connect((self.ip, 1729))
                         write_log(
-                            f"Connecting to ip: {self.ip} from address{port} sending request {request}"
+                            f"Connecting to ip: {self.ip} from address{port} sending request {request}",
+                            5,
                         )
                         ssock.sendall(request.encode())
 
                         data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
-                        write_log(f"Received response {response} to request")
+                        write_log(f"Received response {response} to request", 5)
                         if response:
                             return [
                                 SongMetadataDto.from_dict(n) for n in response.result
                             ]
 
             except socket.timeout:
-                write_log(f"Timeout making request{request} to {self.ip}")
-                break
-            except ConnectionError as e:
-                write_log(e)
-                if tries > 10:
-                    break
+                write_log(f"Timeout making request{request} to {self.ip}", 3)
                 tries += 1
                 time.sleep(0.2)
+            except ConnectionError as e:
+                write_log(
+                    f"Connection error making request {request} to {self}: {e}", 3
+                )
+                tries += 1
+                time.sleep(0.2)
+            except Exception as e:
+                write_log(f"Exception ocurred making {request} to {self} : {e}", 3)
+                tries += 1
+                time.sleep(0.2)
+
+            if tries > 2:
+                break
 
     def get_all_keys(self, sender_id: int) -> list[SongMetadataDto] | None:
         tries: int = 0
@@ -155,15 +164,20 @@ class RemoteNode:
                         )
                         ssock.connect((self.ip, 1729))
                         write_log(
-                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}",
+                            4,
                         )
                         ssock.sendall(request.encode())
+                        write_log("Sended request get all keys", 4)
 
                         data: bytes = ssock.recv(8192)
+                        write_log(f"Received data {data}", 4)
                         response: RpcResponse | None = RpcResponse.decode(data)
-                        write_log(f"Received response {response} to request")
+                        write_log(f"Received response {response} to request", 4)
                         if response:
-                            return [SongMetadataDto.from_dict(n) for n in response]
+                            return [
+                                SongMetadataDto.from_dict(n) for n in response.result
+                            ]
 
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}", 3)
