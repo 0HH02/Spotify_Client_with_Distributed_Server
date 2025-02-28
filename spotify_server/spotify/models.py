@@ -15,13 +15,12 @@ class Song(models.Model):
 
     def to_dict_metadata(self) -> dict:
         return {
-            "id": self.id,
             "title": self.title,
             "artist": self.artist,
             "size": self.size,
             "duration": self.duration,
             "album": self.album,
-            "genre": self.genre if self.genre else "No genre",
+            "genre": self.genre if self.genre else "unknown",
             "image": self.image.url if self.image else None,
         }
 
@@ -32,7 +31,7 @@ class Song(models.Model):
             "duration": self.duration,
             "size": self.size,
             "album": self.album,
-            "genre": self.genre if self.genre else "No genre",
+            "genre": self.genre if self.genre else "unknown",
             "image": self.image.url if self.image else None,
         }.__str__()
 

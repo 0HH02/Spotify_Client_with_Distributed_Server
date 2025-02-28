@@ -4,6 +4,7 @@ import time
 import threading
 import multiprocessing
 from concurrent.futures import ThreadPoolExecutor
+from hashlib import sha256
 
 
 from .rpc_message import RpcRequest, RpcResponse
@@ -104,18 +105,81 @@ class NetworkInterface:
         write_log("Ended discovering")
         return discovered_nodes
 
+    def _handle_receive_song(
+        self, conn: socket.socket, addr: tuple[str, str], request: RpcRequest
+    ):
+        try:
+            conn.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 1024 * 256)
+            conn.settimeout(1)
+            write_log(f"Received request of save song from {addr}", 1)
+            conn.sendall(b"Ok")
+            write_log("Sended Ok", 1)
+            large_data = b""
+            while True:
+                try:
+                    data = conn.recv(1024 * 256)
+                    write_log(f"received {len(data)} bytes more", 1)
+                except socket.timeout:
+                    write_log("No more data", 1)
+                    break
+
+                large_data += data
+            write_log(f"received {len(large_data)} bytes", 1)
+            if sha256(large_data).hexdigest() == request.arguments[1]:
+                write_log("Image Received", 1)
+                request.arguments[0]["image"]["image_data"] = large_data
+                write_log("Sending confirmation of image", 1)
+                conn.sendall(b"Img Ok")
+                write_log("Sended image ok", 1)
+                large_data = b""
+                while True:
+                    try:
+                        data = conn.recv(1024 * 256)
+                        write_log(f"received {len(data)} bytes more", 1)
+                    except socket.timeout:
+                        write_log("No more data", 1)
+                        break
+
+                    large_data += data
+                write_log(f"received {len(large_data)} bytes", 1)
+                if sha256(large_data).hexdigest() == request.arguments[2]:
+                    write_log("Audio Received", 1)
+                    request.arguments[0]["audio_data"] = large_data
+                    response = self.handle_request(request, addr)
+                    conn.sendall(response.encode())
+
+                else:
+                    write_log("Error receiving audio", 1)
+                    conn.sendall(b"Error")
+            else:
+                write_log("Error receiving image", 1)
+                conn.sendall(b"Error")
+
+        except Exception as e:
+            write_log(f"Error handling song {e}", 3)
+
+        finally:
+            conn.close()
+
     def handle_connection(self, conn: socket.socket, addr: tuple[str, str]):
         write_log(f"Handling connection from {addr}")
         try:
-            data: bytes = conn.recv(1024)
+            data: bytes = conn.recv(8192)
             request: RpcRequest | None = RpcRequest.decode(data)
+
             if request:
                 write_log(f"Received request {request} from {addr}")
+                if request.function == RemoteFunctions.SAVE_KEY.value:
+                    return self._handle_receive_song(conn, addr, request)
+
                 response: RpcResponse = self.handle_request(request, addr)
+                write_log(f"Sending response {response} to {addr}", 4)
                 conn.sendall(response.encode())
             else:
                 write_log("Invalid request received")
-                # TODO enviar error al dueño del request
+        except Exception as e:
+            write_log(f"Error handling connection {e}", 3)
+
         finally:
             conn.close()
 
@@ -147,7 +211,9 @@ class NetworkInterface:
                 return RpcResponse(self.node.kademlia_interface.save_song(song_dto))
 
         if request.function == RemoteFunctions.GET_ALL_KEYS.value:
-            return RpcResponse(self.node.kademlia_interface.get_all_metadata())
+            all_songs: list = self.node.kademlia_interface.get_all_songs()
+            write_log(f"Sending all songs {all_songs}", 4)
+            return RpcResponse(all_songs)
 
         if request.function == RemoteFunctions.GET_ALL_NODES.value:
             nodes = [n.to_dict() for n in self.node.kademlia_interface.get_all_nodes()]

@@ -8,6 +8,7 @@ spotify_server/media/*
 spotify_server/venv/*
 !spotify_server/media/.gitignore
 
+songs/*
 
 **/__pycache__/
 

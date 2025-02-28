@@ -13,7 +13,7 @@ from .song_dto import SongDto, SongKey, SongMetadataDto
 from ..services.song_services import SongServices
 from ..logs import write_log
 
-ALPHA = 5
+ALPHA = 3
 
 
 class KademliaNode:
@@ -28,25 +28,35 @@ class KademliaNode:
         self._keep_kademlia_network_connection()
 
     def get_all_songs(self) -> tuple[list[SongMetadataDto], list[RemoteNode]]:
-        write_log("Getting all songs", 1)
+        write_log("Getting all songs", 4)
         nodes: list[RemoteNode] = self._search_all_nodes()
         songs: set[SongMetadataDto] = set()
         lock = threading.Lock()
 
         def _get_songs_from_node(node: RemoteNode):
-            songs_from_node = node.get_all_keys(self.id)
+            write_log(f"Getting songs from node {node}", 4)
+            songs_from_node: list[SongMetadataDto] | None = node.get_all_keys(self.id)
             if songs_from_node:
-                write_log(f"Got {len(songs_from_node)} songs from node {node}", 1)
-                with lock:
-                    songs.update(songs_from_node)
+                write_log(f"Got {len(songs_from_node)} songs from node {node}", 4)
+                for song in songs_from_node:
+                    write_log(f"Got song {song} from node {node}", 4)
+                    with lock:
+                        if song not in songs:
+                            write_log(
+                                f"Adding song {song} with hash {hash(song)} to songs", 4
+                            )
+                            songs.add(song)
+                        else:
+                            write_log(f"Song {song} already in songs", 4)
 
         with ThreadPoolExecutor(ALPHA) as executor:
             executor.map(_get_songs_from_node, nodes)
 
         # TODO improve this using hierarchy of nodes
-        for song in self.kademlia_interface.get_all_metadata():
+        for song in self.kademlia_interface.get_all_songs():
             songs.add(SongMetadataDto.from_dict(song))
 
+        write_log(f"Got {len(songs)} songs in total", 4)
         return list(songs), self.finger_table.get_active_nodes(K_BUCKET_SIZE)
 
     def search_songs_by(
@@ -57,7 +67,9 @@ class KademliaNode:
         lock = threading.Lock()
 
         def _search_songs_by_from_node(node: RemoteNode):
+            write_log(f"Searching songs from node {node}", 5)
             songs_from_node = node.get_keys_by_query(self.id, search_by, query)
+            write_log(f"Got {len(songs_from_node)} songs from node {node}", 5)
             with lock:
                 songs.update(songs_from_node)
 
@@ -65,9 +77,10 @@ class KademliaNode:
             executor.map(_search_songs_by_from_node, nodes)
 
         # TODO improve this using hierarchy of nodes
-        for song in self.kademlia_interface.get_all_metadata():
+        for song in self.kademlia_interface.get_songs_by_query(search_by, query):
             songs.add(SongMetadataDto.from_dict(song))
 
+        write_log(f"Got {len(songs)} songs in total", 5)
         return list(songs), self.finger_table.get_active_nodes(K_BUCKET_SIZE)
 
     def search_song_streamers(
@@ -87,18 +100,25 @@ class KademliaNode:
         return nearest, self.finger_table.get_active_nodes(K_BUCKET_SIZE)
 
     def store_song(self, song: SongDto) -> tuple[bool, list[RemoteNode]]:
-        write_log(f"storing song,{song}", 1)
+        write_log(f"Storing song,{song}", 1)
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
-        write_log(f"the nearest nodes to song {song} are {nearest}", 1)
+        write_log(f"The nearest nodes to song {song} are {nearest}", 1)
 
         local_save = True
         # TODO improve this using hierarchy of nodes
         if len(nearest) < K_BUCKET_SIZE:
             local_save = self.kademlia_interface.save_song(song)
+            write_log("Saved song in local node", 1)
         elif nearest[-1].id ^ key > self.id ^ key:
             nearest.pop()
-            self.kademlia_interface.save_song(song)
+            local_save = self.kademlia_interface.save_song(song)
+            write_log("Saved song in local node", 1)
+
+        write_log(
+            f"The distance between farest node and key is {nearest[-1].id ^ key} and the distance between self and key is {self.id ^ key}",
+            1,
+        )
 
         with ThreadPoolExecutor(ALPHA) as executor:
             results = executor.map(lambda node: node.save_key(self.id, song), nearest)
@@ -139,6 +159,8 @@ class KademliaNode:
             new_nodes: list[RemoteNode] | None = current.get_nears_node(self.id, key)
             if new_nodes:
                 for remote_node in new_nodes:
+                    if remote_node.id == self.id:
+                        continue
                     with lock:
                         if (
                             remote_node not in already_queried
@@ -157,7 +179,7 @@ class KademliaNode:
         return result
 
     def _search_all_nodes(self):
-        write_log("Searching all nodes", 1)
+        write_log("Searching all nodes", 4)
         nodes: list[RemoteNode] = []
         pendings: set[RemoteNode] = set()
         already_queried: set[RemoteNode] = set()
@@ -165,21 +187,23 @@ class KademliaNode:
 
         for remote_node in self.finger_table.get_all_nodes():
             write_log(
-                f"Adding node {remote_node} to pending nodes from finger table", 1
+                f"Adding node {remote_node} to pending nodes from finger table", 4
             )
             nodes.append(remote_node)
             pendings.add(remote_node)
 
         def _get_all_nodes_from_remote(_):
-            write_log("Getting all nodes from remote", 1)
+            write_log("Getting all nodes from remote", 4)
             with lock:
                 current: RemoteNode = pendings.pop()
-                write_log(f"Now gettings nodes from {current}", 1)
+                write_log(f"Now gettings nodes from {current}", 4)
                 already_queried.add(current)
             new_nodes = current.get_all_nodes()
-            write_log(f"Got {len(new_nodes)} nodes from {current}", 1)
+            write_log(f"Got {len(new_nodes)} nodes from {current}", 4)
             if new_nodes:
                 for remote_node in new_nodes:
+                    if remote_node.id == self.id:
+                        continue
                     with lock:
                         if (
                             remote_node not in already_queried
@@ -187,7 +211,7 @@ class KademliaNode:
                         ):
                             write_log(
                                 f"Adding node {remote_node} to pending nodes from discovered nodes",
-                                1,
+                                4,
                             )
                             nodes.append(remote_node)
                             pendings.add(remote_node)
@@ -196,7 +220,7 @@ class KademliaNode:
             with ThreadPoolExecutor(ALPHA) as executor:
                 executor.map(_get_all_nodes_from_remote, range(ALPHA))
 
-        write_log(f"Found {len(nodes)} nodes", 1)
+        write_log(f"Found {len(nodes)} nodes", 4)
         return nodes
 
     def _keep_connection_to_network(self):
@@ -228,16 +252,24 @@ class KademliaInterface:
     def ping(self) -> tuple[bool, int]:
         return True, self.node.id
 
-    def get_all_metadata(self) -> list[dict]:
+    def get_all_songs(self) -> list[dict]:
         songs = SongServices.get_all_songs_metadata()
-        return [song.to_dict_metadata() for song in songs]
+        write_log(f"Got {len(songs)} songs metadata from services", 4)
+        metadata = [song.to_dict_metadata() for song in songs]
+        for s in metadata:
+            s["image"] = f"{self.node.ip}/{s['image']}"
+        return metadata
 
     def get_k_nearest(self, key: int, k: int = K_BUCKET_SIZE) -> list[RemoteNode]:
         return self.node.finger_table.get_k_closets_nodes(key, k)
 
     def get_songs_by_query(self, search_by: str, query: str) -> list[dict]:
         songs = SongServices.search_songs(search_by, query)
-        return [song.to_dict_metadata() for song in songs]
+        metadata = [song.to_dict_metadata() for song in songs]
+        for s in metadata:
+            s["image"] = f"{self.node.ip}/{s['image']}"
+        write_log(f"Se encontraron {len(metadata)} canciones", 5)
+        return metadata
 
     def save_song(self, song: SongDto) -> bool:
         if SongServices.exists_song(song.key):
