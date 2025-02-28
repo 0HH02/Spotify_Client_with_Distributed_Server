@@ -87,10 +87,10 @@ class KademliaNode:
         return nearest, self.finger_table.get_active_nodes(K_BUCKET_SIZE)
 
     def store_song(self, song: SongDto) -> tuple[bool, list[RemoteNode]]:
-        write_log(f"storing song,{song}", 1)
+        write_log(f"Storing song,{song}", 1)
         key: int = sha1_hash(str(song.key))
         nearest: list[RemoteNode] = self._search_k_nearest(key)
-        write_log(f"the nearest nodes to song {song} are {nearest}", 1)
+        write_log(f"The nearest nodes to song {song} are {nearest}", 1)
 
         local_save = True
         # TODO improve this using hierarchy of nodes
@@ -98,7 +98,7 @@ class KademliaNode:
             local_save = self.kademlia_interface.save_song(song)
         elif nearest[-1].id ^ key > self.id ^ key:
             nearest.pop()
-            self.kademlia_interface.save_song(song)
+            local_save = self.kademlia_interface.save_song(song)
 
         with ThreadPoolExecutor(ALPHA) as executor:
             results = executor.map(lambda node: node.save_key(self.id, song), nearest)
@@ -139,6 +139,8 @@ class KademliaNode:
             new_nodes: list[RemoteNode] | None = current.get_nears_node(self.id, key)
             if new_nodes:
                 for remote_node in new_nodes:
+                    if remote_node.id == self.id:
+                        continue
                     with lock:
                         if (
                             remote_node not in already_queried
@@ -180,6 +182,8 @@ class KademliaNode:
             write_log(f"Got {len(new_nodes)} nodes from {current}", 1)
             if new_nodes:
                 for remote_node in new_nodes:
+                    if remote_node.id == self.id:
+                        continue
                     with lock:
                         if (
                             remote_node not in already_queried

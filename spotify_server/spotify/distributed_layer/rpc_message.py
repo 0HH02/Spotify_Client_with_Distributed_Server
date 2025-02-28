@@ -18,7 +18,7 @@ class RpcRequest(Encodable):
     def __init__(self, sender_id: int, function: str, arguments: list):
         self.sender_id: int = sender_id
         self.function: str = function
-        self.arguments: str = arguments
+        self.arguments: list = arguments
 
     def encode(self) -> bytes:
         data = {
@@ -66,3 +66,9 @@ class RpcResponse(Encodable):
             return response
         except (json.JSONDecodeError, KeyError):
             return None
+
+    def __str__(self):
+        return f"Result: {self.result}"
+
+    def __repr__(self):
+        return self.__str__()

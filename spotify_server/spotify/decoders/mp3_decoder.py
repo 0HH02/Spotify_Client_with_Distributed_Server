@@ -1,3 +1,6 @@
+from ..logs import write_log
+
+
 class Mp3Decoder:
     """
     Mp3Decoder is a class for decoding MP3 files, extracting metadata and duration.
@@ -242,12 +245,10 @@ class Mp3Decoder:
         Args:
             _bytes (bytes): The MP3 file bytes to decode.
 
-        Returns:
-            DecodedSong: An object containing metadata and audio data.
-
         Raises:
             ValueError: If required metadata is missing.
         """
+        write_log("Decoded started", 2)
         metadata: dict = {}
 
         if _bytes[:3] == b"ID3":
@@ -265,6 +266,7 @@ class Mp3Decoder:
             )
             metadata.update(id3v2_metadata)
 
+        write_log("ID3v2 parsing", 2)
         if _bytes[-128:-125] == b"TAG":
             id3v1_data: bytes = _bytes[-125:]
             id3v1_metadata: dict = Mp3Decoder.parse_id3v1(id3v1_data)
@@ -273,13 +275,16 @@ class Mp3Decoder:
                 if key not in metadata:
                     metadata[key] = value
 
+        write_log("calculating duration", 2)
         # Calculate duration
         duration: float = Mp3Decoder.calculate_duration(_bytes)
         metadata["duration"] = duration
+        write_log("finished calculating duration", 2)
 
         metadata["audio_data"] = _bytes
         metadata["size"] = len(_bytes)
 
+        write_log("finishing decoding", 2)
         # Validate required metadata
         required_metadata = ["title", "artist", "album"]
         missing_metadata = [key for key in required_metadata if key not in metadata]

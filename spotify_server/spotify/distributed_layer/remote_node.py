@@ -1,6 +1,7 @@
 import socket
 import ssl
 import time
+from hashlib import sha256
 from enum import Enum
 
 from .rpc_message import RpcRequest, RpcResponse
@@ -26,40 +27,71 @@ class RemoteNode:
         tries: int = 0
         while True:
             try:
+                write_log("Trying to save key", 2)
                 context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
                 context.check_hostname = False
                 context.load_verify_locations("./spotify/distributed_layer/cert.pem")
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
-                        ssock.settimeout(3)
+                        ssock.settimeout(10)
 
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             sender_id,
                             RemoteFunctions.SAVE_KEY.value,
-                            [song.to_dict()],
+                            [
+                                song.to_dict(),
+                                sha256(song.image.image_data).hexdigest(),
+                                sha256(song.audio_data).hexdigest(),
+                            ],
                         )
-
+                        write_log(f"Enconding request {request}", 1)
                         ssock.connect((self.ip, 1729))
-                        write_log(
-                            f"Trying to connect to ip: {self.ip} from address {port} sending request {request}"
-                        )
+                        write_log(f"Connected to remote node {self}", 1)
                         ssock.sendall(request.encode())
-                        data: bytes = ssock.recv(1024)
+                        write_log("Sended request", 1)
+                        response = ssock.recv(8192)
+                        if response.decode() == "Ok":
+                            ssock.sendall(song.image.image_data)
+                            write_log(
+                                f"Imagen enviada con {len(song.image.image_data)} bytes y hash {sha256(song.image.image_data).hexdigest()}",
+                                1,
+                            )
+                            response_image: bytes = ssock.recv(8192)
+                            if response_image.decode() == "Img Ok":
+                                write_log("Confirmacion de envio de imagen recibida", 1)
+                                ssock.sendall(song.audio_data)
+                            else:
+                                write_log("Error enviando imagen", 1)
+                                break
+                        else:
+                            write_log("Error enviando cancion", 1)
+                            break
+
+                        write_log("Cancion enviada", 1)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
-                        write_log(f"Received response to request {request}")
+                        write_log(
+                            f"Received response {response} to request save_key", 1
+                        )
                         if response:
                             return bool(response.result)
 
             except socket.timeout:
-                write_log(f"Timeout making request{request} to {self.ip}")
-                break
-            except ConnectionError as error:
-                write_log(error)
-                if tries > 10:
-                    break
+                write_log(f"Timeout making request {request} to {self}", 3)
                 tries += 1
                 time.sleep(0.2)
+            except ConnectionError as error:
+                write_log(f"Connection error making {request} to {self} : {error}", 3)
+                tries += 1
+                time.sleep(0.2)
+            except Exception as e:
+                tries += 1
+                time.sleep(0.2)
+                write_log(f"Exception ocurred making {request} to {self} : {e}", 3)
+
+            if tries > 2:
+                break
 
     def get_keys_by_query(
         self, sender_id, search_by: str, query: str
@@ -82,11 +114,11 @@ class RemoteNode:
                         )
                         ssock.connect((self.ip, 1729))
                         write_log(
-                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}"
+                            f"Connecting to ip: {self.ip} from address{port} sending request {request}"
                         )
                         ssock.sendall(request.encode())
 
-                        data: bytes = ssock.recv(1024)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
                         write_log(f"Received response {response} to request")
                         if response:
@@ -127,17 +159,17 @@ class RemoteNode:
                         )
                         ssock.sendall(request.encode())
 
-                        data: bytes = ssock.recv(1024)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
                         write_log(f"Received response {response} to request")
                         if response:
                             return [SongMetadataDto.from_dict(n) for n in response]
 
             except socket.timeout:
-                write_log(f"Timeout making request{request} to {self.ip}")
+                write_log(f"Timeout making request{request} to {self.ip}", 3)
                 break
             except ConnectionError as e:
-                write_log(e)
+                write_log(e, 3)
                 if tries > 10:
                     break
                 tries += 1
@@ -168,7 +200,7 @@ class RemoteNode:
                         )
                         ssock.sendall(request.encode())
 
-                        data: bytes = ssock.recv(1024)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
                         write_log(f"Received response {response} to request")
                         if response:
@@ -209,7 +241,7 @@ class RemoteNode:
                         )
                         ssock.sendall(request.encode())
 
-                        data: bytes = ssock.recv(1024)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
                         write_log(f"Received response {response} to request")
                         if response:
@@ -251,7 +283,7 @@ class RemoteNode:
                         )
                         ssock.sendall(request.encode())
 
-                        data: bytes = ssock.recv(1024)
+                        data: bytes = ssock.recv(8192)
                         response: RpcResponse | None = RpcResponse.decode(data)
                         write_log(f"Received response {response} to request")
                         if response:
