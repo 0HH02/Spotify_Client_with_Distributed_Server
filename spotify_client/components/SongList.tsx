@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Search,
@@ -8,7 +8,9 @@ import {
   Album,
   Upload,
   ArrowLeft,
-} from "lucide-react"; // Importar ArrowLeft
+  Mic, // Importamos el icono del micrófono
+  MicOff, // Importamos el icono de micrófono apagado
+} from "lucide-react";
 import serverManager from "@/middleware/ServerManager";
 import Image from "next/image";
 import axios from "axios";
@@ -31,10 +33,54 @@ interface SongListProps {
   searchTerm: string;
   onSortTypeChange: (type: "all" | "artist" | "genre" | "album") => void;
   onSearchTermChange: (term: string) => void;
-  onHide: () => void; // Nueva prop para ocultar la lista
+  onHide: () => void;
 }
 
 type SortType = "all" | "artist" | "genre" | "album";
+
+// Servicio para manejar la búsqueda por voz
+const voiceSearchService = {
+  // Función para procesar el audio con Whisper
+  async processAudioWithWhisper(audioBlob: Blob): Promise<string> {
+    try {
+      const server = await serverManager.getAvailableServer();
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+
+      const response = await axios.post(`${server}/api/whisper/`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      return response.data.text;
+    } catch (error) {
+      console.error("Error al procesar audio con Whisper:", error);
+      throw new Error("No se pudo procesar el audio");
+    }
+  },
+
+  // Función para analizar el texto con Gemini
+  async analyzeTextWithGemini(
+    text: string
+  ): Promise<{ filter: SortType; query: string }> {
+    try {
+      const server = await serverManager.getAvailableServer();
+      const response = await axios.post(`${server}/api/gemini/`, {
+        prompt: `Analiza el siguiente comando de voz para buscar música: "${text}". 
+                Devuelve un JSON con el formato {"filter": "tipo de filtro", "query": "término de búsqueda"}.
+                El filtro debe ser uno de los siguientes: "all", "artist", "genre", "album".
+                Si no se menciona un filtro específico, usa "all".`,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error("Error al analizar texto con Gemini:", error);
+      // Si falla, devolvemos valores predeterminados
+      return { filter: "all" as SortType, query: text };
+    }
+  },
+};
 
 export const SongList: React.FC<SongListProps> = ({
   songs,
@@ -48,7 +94,83 @@ export const SongList: React.FC<SongListProps> = ({
   onHide,
 }) => {
   const [isDragging, setIsDragging] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  // Función para iniciar la grabación
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        setIsProcessing(true);
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, {
+            type: "audio/webm",
+          });
+
+          // Procesar con Whisper
+          const transcribedText =
+            await voiceSearchService.processAudioWithWhisper(audioBlob);
+          console.log("Texto transcrito:", transcribedText);
+
+          // Analizar con Gemini
+          const { filter, query } =
+            await voiceSearchService.analyzeTextWithGemini(transcribedText);
+          console.log("Análisis Gemini:", { filter, query });
+
+          // Actualizar los filtros y realizar la búsqueda
+          if (filter !== sortType) {
+            onSortTypeChange(filter);
+          }
+          onSearchTermChange(query);
+        } catch (error) {
+          console.error("Error al procesar la grabación:", error);
+          alert("No se pudo procesar la grabación de voz");
+        } finally {
+          setIsProcessing(false);
+
+          // Detener todas las pistas del stream
+          stream.getTracks().forEach((track) => track.stop());
+        }
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error al iniciar la grabación:", error);
+      alert("No se pudo acceder al micrófono");
+    }
+  };
+
+  // Función para detener la grabación
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  // Limpiar recursos cuando el componente se desmonte
+  useEffect(() => {
+    return () => {
+      if (mediaRecorderRef.current && isRecording) {
+        mediaRecorderRef.current.stop();
+      }
+    };
+  }, [isRecording]);
 
   const handleFileChange = async (
     event: React.ChangeEvent<HTMLInputElement>
@@ -124,7 +246,6 @@ export const SongList: React.FC<SongListProps> = ({
     <div className="bg-gradient-to-b from-purple-900 to-indigo-800 h-full overflow-hidden flex flex-col relative">
       <div className="p-6 pb-0 flex items-center justify-between">
         <h2 className="text-2xl font-bold text-white">Playlist</h2>
-        {/* Botón para ocultar la lista en todas las pantallas */}
         <button
           className="p-2 bg-purple-700 rounded-full text-white"
           onClick={onHide}
@@ -146,6 +267,26 @@ export const SongList: React.FC<SongListProps> = ({
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-300"
             size={20}
           />
+
+          {/* Botón de búsqueda por voz */}
+          <button
+            className={`absolute right-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full focus:outline-none ${
+              isRecording
+                ? "bg-red-500 animate-pulse"
+                : isProcessing
+                ? "bg-yellow-500"
+                : "bg-purple-600 hover:bg-purple-500"
+            }`}
+            onClick={isRecording ? stopRecording : startRecording}
+            disabled={isProcessing}
+            aria-label={isRecording ? "Detener grabación" : "Buscar por voz"}
+          >
+            {isRecording ? (
+              <MicOff size={18} className="text-white" />
+            ) : (
+              <Mic size={18} className="text-white" />
+            )}
+          </button>
         </div>
         <div className="flex justify-between mb-4">
           <SortIcon type="all" icon={Music} />
@@ -169,7 +310,7 @@ export const SongList: React.FC<SongListProps> = ({
             onClick={() => onSongSelect(song.title + "-" + song.artist)}
           >
             <Image
-              src={song.coverUrl}
+              src={song.coverUrl || "/media/default-cover.jpg"}
               alt={song.title}
               width={480}
               height={480}

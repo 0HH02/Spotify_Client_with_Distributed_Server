@@ -135,9 +135,10 @@ export default function Home() {
           searchTerm={searchTerm}
           onSortTypeChange={updateSortType}
           onSearchTermChange={updateSearchTerm}
-          onSongUpload={(file) => {
+          onSongUpload={async (file) => {
             // Implementa aquí la lógica de subir canción
             console.log("Subiendo archivo:", file.name);
+            await fetchAllSongs();
           }}
           onHide={() => {
             setShowSongList(false);
