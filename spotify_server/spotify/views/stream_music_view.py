@@ -5,10 +5,12 @@ from rest_framework import status
 from django.http import StreamingHttpResponse
 from ..distributed_layer.distributed_interface import DistributedInterface
 from ..distributed_layer.song_dto import SongKey
+from ..logs import write_log
 
 
 class StreamMusicView(APIView):
     def get(self, request, _=None):
+        write_log("Called Stream View", 2)
         music_id: str | None = request.query_params.get("song_id")
         range_header = request.headers.get("Range", "").strip()
         range_match = re.match(r"bytes=(\d+)-(\d*)", range_header)
@@ -40,6 +42,7 @@ class StreamMusicView(APIView):
             response["Access-Control-Allow-Origin"] = "*"
             return response
 
+        write_log("Generator not found", 3)
         return Response(
             {"error": "Music not found."},
             status=status.HTTP_404_NOT_FOUND,

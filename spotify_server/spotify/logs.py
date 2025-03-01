@@ -12,6 +12,7 @@ def write_log(log: str, t=0) -> None:
         3: "e_logs.txt",
         4: "g_logs.txt",
         5: "q_logs.txt",
+        6: "r_logs.txt",
     }
     log_file = logs[t]
     with lock:

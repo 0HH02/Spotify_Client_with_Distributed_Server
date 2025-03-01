@@ -107,8 +107,8 @@ class ServerManager {
 }
 
 export default new ServerManager([
-  "http://loaclhost:4000/172.0.13.2",
-  "http://loaclhost:4000/172.0.13.3",
-  "http://loaclhost:4000/172.0.13.4",
-  "http://loaclhost:4000/172.0.13.5",
+  "http://localhost:4000/172.0.13.2",
+  "http://localhost:4000/172.0.13.3",
+  "http://localhost:4000/172.0.13.4",
+  "http://localhost:4000/172.0.13.5",
 ]);

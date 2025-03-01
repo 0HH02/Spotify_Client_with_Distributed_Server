@@ -16,6 +16,7 @@ class RemoteFunctions(Enum):
     SAVE_KEY = "save_key"
     GET_ALL_KEYS = "get_all_keys"
     GET_ALL_NODES = "get_nodes"
+    CONSTAINS_KEY = "constains_key"
 
 
 class RemoteNode:
@@ -23,7 +24,7 @@ class RemoteNode:
         self.ip: str = ip
         self.id: int = node_id
 
-    def save_key(self, sender_id: int, song: SongDto):
+    def save_key(self, sender_id: int, song: SongDto, seed: bool = False):
         tries: int = 0
         while True:
             try:
@@ -43,6 +44,7 @@ class RemoteNode:
                                 song.to_dict(),
                                 sha256(song.image.image_data).hexdigest(),
                                 sha256(song.audio_data).hexdigest(),
+                                seed,
                             ],
                         )
                         write_log(f"Enconding request {request}", 1)
@@ -188,6 +190,12 @@ class RemoteNode:
                     break
                 tries += 1
                 time.sleep(0.2)
+            except Exception as e:
+                write_log(str(e), 3)
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
 
     def get_nears_node(
         self, sender_id: int, target_id: int
@@ -226,13 +234,20 @@ class RemoteNode:
                 write_log(f"Timeout making request{request} to {self.ip}")
 
             except ConnectionError as e:
-                write_log(e)
+                write_log(str(e))
                 if tries > 10:
                     break
                 tries += 1
                 time.sleep(0.2)
 
-    def ping(self, sender_id: int) -> tuple[bool, str | None]:
+            except Exception as e:
+                write_log(str(e))
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
+
+    def ping(self, sender_id: int) -> tuple[bool, int | None]:
         tries: int = 0
         while True:
             try:
@@ -267,7 +282,13 @@ class RemoteNode:
                 write_log(f"Timeout making request{request} to {self.ip}")
                 return False, None
             except ConnectionError as e:
-                write_log(e)
+                write_log(str(e))
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
+            except Exception as e:
+                write_log(str(e))
                 if tries > 10:
                     break
                 tries += 1
@@ -308,7 +329,66 @@ class RemoteNode:
                 write_log(f"Timeout making request{request} to {self.ip}")
                 return []
             except ConnectionError as e:
-                write_log(e)
+                write_log(str(e))
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
+
+            except Exception as e:
+                write_log(str(e))
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
+
+    def constains_key(self, key: int, sender_id: int) -> bool:
+        tries: int = 0
+        while True:
+            try:
+                write_log(f"Sending request to check if key is in node {self}", 6)
+                context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+                context.check_hostname = False
+                context.load_verify_locations("./spotify/distributed_layer/cert.pem")
+                with socket.socket() as sock:
+                    with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
+
+                        ssock.settimeout(3)
+                        port = ssock.getsockname()[1]
+                        request = RpcRequest(
+                            sender_id,
+                            RemoteFunctions.CONSTAINS_KEY.value,
+                            [key],
+                        )
+                        ssock.connect((self.ip, 1729))
+                        write_log(
+                            f"Trying to connect to ip: {self.ip} from address{port} sending request {request}",
+                            6,
+                        )
+                        ssock.sendall(request.encode())
+
+                        data: bytes = ssock.recv(8192)
+                        response: RpcResponse | None = RpcResponse.decode(data)
+                        write_log(
+                            f"Received response {response} to request {request} to node {self}",
+                            6,
+                        )
+                        if response:
+                            return response.result
+
+                        return False
+
+            except socket.timeout:
+                write_log(f"Timeout making request{request} to {self.ip}")
+                return False, None
+            except ConnectionError as e:
+                write_log(str(e))
+                if tries > 10:
+                    break
+                tries += 1
+                time.sleep(0.2)
+            except Exception as e:
+                write_log(str(e))
                 if tries > 10:
                     break
                 tries += 1

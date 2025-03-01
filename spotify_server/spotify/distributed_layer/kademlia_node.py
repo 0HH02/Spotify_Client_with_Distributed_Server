@@ -3,6 +3,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from heapq import heappush, heappop
 
+from spotify.models import Song
+
 
 from .remote_node import RemoteNode
 from .utils import sha1_hash
@@ -24,8 +26,10 @@ class KademliaNode:
         self.finger_table = FingerTable(self)
         self.kademlia_interface = KademliaInterface(self)
         self.connected = False
+        self.seeds: set[SongKey] = set()
         self.network_interface.start_listening()
         self._keep_kademlia_network_connection()
+        self._ensure_persistance()
 
     def get_all_songs(self) -> tuple[list[SongMetadataDto], list[RemoteNode]]:
         write_log("Getting all songs", 4)
@@ -108,12 +112,12 @@ class KademliaNode:
         local_save = True
         # TODO improve this using hierarchy of nodes
         if len(nearest) < K_BUCKET_SIZE:
-            local_save = self.kademlia_interface.save_song(song)
-            write_log("Saved song in local node", 1)
+            local_save = self.kademlia_interface.save_song(song, True)
+            write_log("Saved song in local node and added to seeds", 6)
         elif nearest[-1].id ^ key > self.id ^ key:
             nearest.pop()
-            local_save = self.kademlia_interface.save_song(song)
-            write_log("Saved song in local node", 1)
+            local_save = self.kademlia_interface.save_song(song, True)
+            write_log("Saved song in local node and added to seeds", 6)
 
         write_log(
             f"The distance between farest node and key is {nearest[-1].id ^ key} and the distance between self and key is {self.id ^ key}",
@@ -121,7 +125,9 @@ class KademliaNode:
         )
 
         with ThreadPoolExecutor(ALPHA) as executor:
-            results = executor.map(lambda node: node.save_key(self.id, song), nearest)
+            results = executor.map(
+                lambda node: node.save_key(self.id, song, node == nearest[0]), nearest
+            )
 
         for n in results:
             write_log("Saved song in node" if n else "Failed to save song in node", 1)
@@ -141,7 +147,7 @@ class KademliaNode:
     def _constains_song(self, key: SongKey):
         return SongServices.exists_song(key)
 
-    def _search_k_nearest(self, key: int, k: int = K_BUCKET_SIZE):
+    def _search_k_nearest(self, key: int, k: int = K_BUCKET_SIZE) -> list[RemoteNode]:
         write_log(f"Searching k nearest nodes to key {key}", 1)
         nearest: list[RemoteNode] = []
         pending: set[RemoteNode] = set()
@@ -244,6 +250,39 @@ class KademliaNode:
     def _keep_kademlia_network_connection(self):
         threading.Thread(target=self._keep_connection_to_network, args=[]).start()
 
+    def _ensure_persistance_service(self):
+        write_log("Starting ensure persistance", 6)
+        while True:
+            for song in self.seeds:
+                write_log(f"Verifiyng song {song} persistance in network", 6)
+                key = sha1_hash(str(song))
+                nearest = self._search_k_nearest(key)
+                for node in nearest:
+                    if node.constains_key(str(song), self.id):
+                        write_log(f"Node {node} already constains song {song}", 6)
+                        continue
+                    song_data: Song | None = SongServices.get_song(song)
+                    if not song_data:
+                        write_log("Song is in seeds but is not in the database", 3)
+                        self.seeds.remove(song)
+                    else:
+                        song_dto: SongDto | None = SongDto.from_dict(
+                            song_data.to_dict()
+                        )
+                        if not song_dto:
+                            write_log(
+                                f"Error constructing song dto from song data for {song}",
+                                6,
+                            )
+                        else:
+                            node.save_key(self.id, song_dto)
+                            write_log(f"Saved song {song_dto} in node {node}", 6)
+
+            time.sleep(240)
+
+    def _ensure_persistance(self):
+        threading.Thread(target=self._ensure_persistance_service, args=[]).start()
+
 
 class KademliaInterface:
     def __init__(self, node: KademliaNode):
@@ -257,7 +296,7 @@ class KademliaInterface:
         write_log(f"Got {len(songs)} songs metadata from services", 4)
         metadata = [song.to_dict_metadata() for song in songs]
         for s in metadata:
-            s["image"] = f"{self.node.ip}/{s['image']}"
+            s["image"] = f"{self.node.ip}{s['image']}"
         return metadata
 
     def get_k_nearest(self, key: int, k: int = K_BUCKET_SIZE) -> list[RemoteNode]:
@@ -271,13 +310,19 @@ class KademliaInterface:
         write_log(f"Se encontraron {len(metadata)} canciones", 5)
         return metadata
 
-    def save_song(self, song: SongDto) -> bool:
+    def save_song(self, song: SongDto, seed: bool) -> bool:
         if SongServices.exists_song(song.key):
+            write_log(f"Song {song} already exists", 6)
             return True
         uploaded = SongServices.upload_song(song)
         if uploaded:
+            if seed:
+                self.node.seeds.add(song.key)
             return True
         return False
+
+    def constains_song(self, song_key: SongKey) -> bool:
+        return SongServices.exists_song(song_key)
 
     def get_all_nodes(self) -> list[RemoteNode]:
         return self.node.finger_table.get_all_nodes()

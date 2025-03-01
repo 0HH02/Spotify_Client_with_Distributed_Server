@@ -36,17 +36,16 @@ export default function Home() {
     try {
       const server = await serverManager.getAvailableServer();
       const response = await axios.get(`${server}/api/songs/`);
-      console.log(response.data.data);
+      const base_server = server?.substring(0, server?.lastIndexOf("/"));
       const apiSongs = response.data.data.songs.map((song: Song) => ({
         title: song.title,
         artist: song.artist,
         genre: song.genre,
         album: song.album,
-        coverUrl: `${server}${song.image}`,
+        coverUrl: `${base_server}/${song.image}`,
         duration: song.duration,
         fileSize: song.size,
       }));
-      console.log(apiSongs);
       setSongs(apiSongs);
       if (apiSongs.length > 0) setCurrentSongId(apiSongs[0].id);
     } catch (error) {
@@ -149,9 +148,8 @@ export default function Home() {
 
       {/* Contenedor del Reproductor, ajusta el margen izquierdo según la visibilidad del slider */}
       <div
-        className={`flex-1 flex justify-center items-center p-4 transition-all duration-300 ${
-          showSongList ? "md:ml-80" : "md:ml-0"
-        }`}
+        className={`flex-1 flex justify-center items-center p-4 transition-all duration-300 ${showSongList ? "md:ml-80" : "md:ml-0"
+          }`}
       >
         <RetroMusicPlayer
           songs={songs}

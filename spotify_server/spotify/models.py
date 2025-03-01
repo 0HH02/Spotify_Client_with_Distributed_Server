@@ -24,6 +24,21 @@ class Song(models.Model):
             "image": self.image.url if self.image else None,
         }
 
+    def to_dict(self) -> dict:
+        return {
+            "title": self.title,
+            "artist": self.artist,
+            "size": self.size,
+            "duration": self.duration,
+            "album": self.album,
+            "genre": self.genre if self.genre else "unknown",
+            "image": {
+                "image_data": self.image.read(),
+                "file_extension": self.image.name.split(".")[-1],
+            },
+            "audio_data": self.audio.read(),
+        }
+
     def __str__(self) -> str:
         return {
             "title": self.title,
@@ -37,3 +52,7 @@ class Song(models.Model):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    @property
+    def key(self):
+        return f"{self.title}-{self.artist}"

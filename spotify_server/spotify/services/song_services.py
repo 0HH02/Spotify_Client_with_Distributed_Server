@@ -12,12 +12,18 @@ from django.conf import settings
 
 from ..models import Song
 from ..distributed_layer.song_dto import SongKey, SongDto
+from ..logs import write_log
 
 # pylint: disable=no-member
 
 
 class SongServices:
     """"""
+
+    @staticmethod
+    def get_song(song_key: SongKey) -> Song | None:
+        title, artist = song_key.key
+        return Song.objects.filter(title=title, artist=artist).first()
 
     @staticmethod
     def exists_song(song_key: SongKey) -> bool:
@@ -115,5 +121,5 @@ class SongServices:
             return file_iterator(audio_file, length), file_size
 
         except Song.DoesNotExist:
-            print("Song no encontrada")
+            write_log("Song no encontrada", 3)
             return None, None

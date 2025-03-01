@@ -58,7 +58,10 @@ class FingerTable:
         for _ in range(len(nodes)):
             n: RemoteNode = nodes[randint(0, len(nodes) - 1)]
             if n.ping(self.node.id)[0]:
+                write_log(f"Node {n} is up")
                 nodes.append(n)
+            else:
+                write_log(f"Node {n} is down")
             if len(nodes) >= k:
                 break
 

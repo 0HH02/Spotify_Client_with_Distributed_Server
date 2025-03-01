@@ -37,6 +37,55 @@ interface Song {
   fileSize: number;
 }
 
+
+const FetchedImage: React.FC<{
+  srcUrl: string;
+  alt: string;
+  width: number;
+  height: number;
+  className?: string;
+}> = ({ srcUrl, alt, width, height, className }) => {
+  const [src, setSrc] = useState("");
+
+  useEffect(() => {
+    let objectUrl: string | null = null;
+
+    const fetchImage = async () => {
+      try {
+        const response = await axios.get(srcUrl, { responseType: "blob" });
+        const blob = response.data;
+        objectUrl = URL.createObjectURL(blob);
+        setSrc(objectUrl);
+      } catch (error) {
+        console.error("Error fetching image:", error);
+        setSrc("/default_image.jpg");
+      }
+    };
+
+    if (srcUrl) {
+      fetchImage();
+    }
+
+    return () => {
+      if (objectUrl) {
+        URL.revokeObjectURL(objectUrl);
+      }
+    };
+  }, [srcUrl]);
+
+  return (
+    <Image
+      src={src || "/default_image.jpg"}
+      alt={alt}
+      width={width}
+      height={height}
+      className={className}
+      priority
+    />
+  );
+};
+
+
 export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
   songs,
   currentSongId,
@@ -379,7 +428,6 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
     const seconds = Math.floor(time % 60);
     return `${minutes}:${seconds.toString().padStart(2, "0")}`;
   };
-
   return (
     <div className="flex-1 bg-gradient-to-b from-purple-800 to-indigo-900 p-8 rounded-xl overflow-hidden flex flex-col justify-center items-center">
       <div className="w-full max-w-md">
@@ -389,13 +437,12 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           transition={{ duration: 0.5 }}
           className="relative aspect-square mb-8 overflow-hidden rounded-lg"
         >
-          <Image
-            src={currentSong.coverUrl || "/default_image.jpg"}
+          <FetchedImage
+            srcUrl={currentSong.coverUrl || "/default_image.jpg"}
             alt={`${currentSong.title || "No song loaded"} cover`}
             width={300} // Ancho requerido
             height={300} // Alto requerido
             className="w-full h-full object-cover"
-            priority
           />
         </motion.div>
         <motion.h2
@@ -424,8 +471,8 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
             max={
               currentSong?.duration &&
               Math.floor(currentSong?.duration) * 60 +
-                currentSong?.duration -
-                Math.floor(currentSong?.duration)
+              currentSong?.duration -
+              Math.floor(currentSong?.duration)
             }
             value={currentTime}
             onChange={handleSeek}
@@ -435,22 +482,22 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           <span className="text-purple-200 text-sm">
             {currentSong.duration
               ? Math.floor(currentSong?.duration).toString() +
-                ":" +
-                (Math.floor(
-                  (currentSong?.duration - Math.floor(currentSong?.duration)) *
-                    100
-                ).toString().length == 1
-                  ? "0" +
-                    Math.floor(
-                      (currentSong?.duration -
-                        Math.floor(currentSong?.duration)) *
-                        100
-                    ).toString()
-                  : Math.floor(
-                      (currentSong?.duration -
-                        Math.floor(currentSong?.duration)) *
-                        100
-                    ).toString())
+              ":" +
+              (Math.floor(
+                (currentSong?.duration - Math.floor(currentSong?.duration)) *
+                100
+              ).toString().length == 1
+                ? "0" +
+                Math.floor(
+                  (currentSong?.duration -
+                    Math.floor(currentSong?.duration)) *
+                  100
+                ).toString()
+                : Math.floor(
+                  (currentSong?.duration -
+                    Math.floor(currentSong?.duration)) *
+                  100
+                ).toString())
               : ""}
           </span>
         </div>
@@ -466,11 +513,10 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
-            className={`text-white p-5 rounded-full ${
-              loading
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-purple-600 hover:bg-purple-500"
-            } transition-colors`}
+            className={`text-white p-5 rounded-full ${loading
+              ? "bg-gray-600 cursor-not-allowed"
+              : "bg-purple-600 hover:bg-purple-500"
+              } transition-colors`}
             onClick={togglePlayPause}
             disabled={loading} // Botón deshabilitado durante la carga
           >

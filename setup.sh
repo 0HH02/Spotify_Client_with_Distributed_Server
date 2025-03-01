@@ -52,7 +52,31 @@ echo "router container executed."
 docker network connect --ip 172.0.12.254 $CLIENT_NETWORK $ROUTER_CONTAINER
 docker network connect --ip 172.0.13.254 $SERVER_NETWORK $ROUTER_CONTAINER
 
+#Proxy Container Configuration
 
+PROXY_IMAGE="proxy_img"
+PROXY_CONTAINER="proxy_container"
+
+PROXY_FOLDER=$(ls | grep "proxy")
+
+docker image inspect $PROXY_IMAGE >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    echo "proxy image already exist"
+
+else
+    echo "creating proxy image"
+    docker build -t $PROXY_IMAGE ./$PROXY_FOLDER
+    echo "proxy image created"
+fi
+
+docker container inspect $PROXY_CONTAINER >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    docker container stop $PROXY_CONTAINER
+    docker container rm $PROXY_CONTAINER
+    echo "proxy container removed." 
+fi
+
+docker run -d --name $PROXY_CONTAINER -p 4000:4000 --network $CLIENT_NETWORK --cap-add NET_ADMIN $PROXY_IMAGE
 
 #Client Container Configuration
 
@@ -76,7 +100,7 @@ if [ $? -eq 0 ]; then
     echo "client container removed."    
 fi
 
-docker run -d --name $CLIENT_CONTAINER -p 3000:3000 -p 4000:4000 --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
+docker run -d --name $CLIENT_CONTAINER -p 3000:3000 --network $CLIENT_NETWORK --cap-add NET_ADMIN $CLIENT_IMAGE
 echo "client container executed."
 
 
@@ -105,13 +129,4 @@ fi
 for i in {0..3}
 do
 	docker run -d --name "${SERVER_CONTAINER}_${i}" --network $SERVER_NETWORK --cap-add NET_ADMIN $SERVER_IMAGE
-done	
-
-
-
-
-
-
-
-
-
+done

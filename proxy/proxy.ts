@@ -56,6 +56,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.2:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.2": "", // Elimina el prefijo de la URL
+    },
   })
 );
 
@@ -64,6 +67,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.3:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.3": "", // Elimina el prefijo de la URL
+    },
   })
 );
 
@@ -72,6 +78,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.4:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.4": "", // Elimina el prefijo de la URL
+    },
   })
 );
 app.use(
@@ -79,6 +88,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.5:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.5": "", // Elimina el prefijo de la URL
+    },
   })
 );
 app.use(
@@ -86,6 +98,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.6:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.6": "", // Elimina el prefijo de la URL
+    },
   })
 );
 app.use(
@@ -93,6 +108,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.7:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.7": "", // Elimina el prefijo de la URL
+    },
   })
 );
 app.use(
@@ -100,6 +118,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.8:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.8": "", // Elimina el prefijo de la URL
+    },
   })
 );
 app.use(
@@ -107,6 +128,9 @@ app.use(
   createProxyMiddleware({
     target: "http://172.0.13.9:8000", // Dirección del backend
     changeOrigin: true,
+    pathRewrite: {
+      "^/172.0.13.9": "", // Elimina el prefijo de la URL
+    },
   })
 );
 // Proxy para redirigir todo lo demás al frontend

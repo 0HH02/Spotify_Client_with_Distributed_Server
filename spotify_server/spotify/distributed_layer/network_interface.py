@@ -9,7 +9,7 @@ from hashlib import sha256
 
 from .rpc_message import RpcRequest, RpcResponse
 from .remote_node import RemoteNode, RemoteFunctions
-from .song_dto import SongDto
+from .song_dto import SongDto, SongKey
 
 from ..logs import write_log
 
@@ -97,10 +97,10 @@ class NetworkInterface:
                         write_log(f"Node {new_node} is alive and verified")
 
         except socket.timeout:
-            write_log("Timeout sending discover broadcast")
+            write_log("Timeout sending discover broadcast", 3)
 
         except ConnectionError:
-            write_log("Error sending ping of confirmation")
+            write_log("Error sending ping of confirmation", 3)
 
         write_log("Ended discovering")
         return discovered_nodes
@@ -207,8 +207,11 @@ class NetworkInterface:
 
         if request.function == RemoteFunctions.SAVE_KEY.value:
             song_dto: SongDto | None = SongDto.from_dict(request.arguments[0])
+            seed: bool = bool(request.arguments[3])
             if song_dto:
-                return RpcResponse(self.node.kademlia_interface.save_song(song_dto))
+                return RpcResponse(
+                    self.node.kademlia_interface.save_song(song_dto, seed)
+                )
 
         if request.function == RemoteFunctions.GET_ALL_KEYS.value:
             all_songs: list = self.node.kademlia_interface.get_all_songs()
@@ -218,3 +221,14 @@ class NetworkInterface:
         if request.function == RemoteFunctions.GET_ALL_NODES.value:
             nodes = [n.to_dict() for n in self.node.kademlia_interface.get_all_nodes()]
             return RpcResponse(nodes)
+
+        if request.function == RemoteFunctions.CONSTAINS_KEY.value:
+            write_log(
+                f"Received constains key request with key {request.arguments[0]}", 6
+            )
+            song_key = SongKey.from_string(request.arguments[0])
+            if song_key:
+                write_log("Song key valid", 6)
+            return RpcResponse(self.node.kademlia_interface.constains_song(song_key))
+
+        write_log(f"Request Function invalid {request}")
