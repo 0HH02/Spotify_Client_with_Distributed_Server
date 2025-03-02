@@ -7,6 +7,7 @@ from .views import (
     SearchSongsView,
     UploadSongView,
     FindStreamersView,
+    AliveView,
 )
 
 urlpatterns = [
@@ -15,4 +16,5 @@ urlpatterns = [
     path("search/", SearchSongsView.as_view(), name="search-songs"),
     path("upload/", UploadSongView.as_view(), name="upload-song"),
     path("findStreamers/", FindStreamersView.as_view(), name="find-streamer"),
+    path("alive/", AliveView.as_view(), name="alive"),
 ]

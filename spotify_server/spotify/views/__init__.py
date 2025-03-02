@@ -5,4 +5,4 @@ from .stream_music_view import StreamMusicView
 from .search_songs_view import SearchSongsView
 from .upload_songs_view import UploadSongView
 from .find_streamers_view import FindStreamersView
-
+from .alive_view import AliveView

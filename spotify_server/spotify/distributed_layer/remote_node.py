@@ -34,7 +34,7 @@ class RemoteNode:
                 context.load_verify_locations("./spotify/distributed_layer/cert.pem")
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
-                        ssock.settimeout(6)
+                        ssock.settimeout(3)
 
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
@@ -82,18 +82,19 @@ class RemoteNode:
             except socket.timeout:
                 write_log(f"Timeout making request {request} to {self}", 3)
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
             except ConnectionError as error:
                 write_log(f"Connection error making {request} to {self} : {error}", 3)
-                tries += 1
-                time.sleep(0.2)
+                break
             except Exception as e:
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
                 write_log(f"Exception ocurred making {request} to {self} : {e}", 3)
 
             if tries > 2:
                 break
+
+        return False
 
     def get_keys_by_query(
         self, sender_id, search_by: str, query: str
@@ -132,20 +133,21 @@ class RemoteNode:
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}", 3)
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
             except ConnectionError as e:
                 write_log(
                     f"Connection error making request {request} to {self}: {e}", 3
                 )
-                tries += 1
-                time.sleep(0.2)
+                break
             except Exception as e:
                 write_log(f"Exception ocurred making {request} to {self} : {e}", 3)
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
 
             if tries > 2:
                 break
+
+        return []
 
     def get_all_keys(self, sender_id: int) -> list[SongMetadataDto] | None:
         tries: int = 0
@@ -157,7 +159,7 @@ class RemoteNode:
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                        ssock.settimeout(3)
+                        ssock.settimeout(2)
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             sender_id,
@@ -183,19 +185,20 @@ class RemoteNode:
 
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}", 3)
-                break
-            except ConnectionError as e:
-                write_log(e, 3)
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+            except ConnectionError as e:
+                write_log(str(e), 3)
+                break
             except Exception as e:
                 write_log(str(e), 3)
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+
+            if tries > 10:
+                break
+
+        return []
 
     def get_nears_node(
         self, sender_id: int, target_id: int
@@ -209,7 +212,7 @@ class RemoteNode:
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                        ssock.settimeout(3)
+                        ssock.settimeout(2)
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             sender_id,
@@ -232,20 +235,22 @@ class RemoteNode:
 
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}")
+                tries += 1
+                time.sleep(0.00002)
 
             except ConnectionError as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
-                tries += 1
-                time.sleep(0.2)
+                break
 
             except Exception as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+
+            if tries > 10:
+                break
+
+        return []
 
     def ping(self, sender_id: int) -> tuple[bool, int | None]:
         tries: int = 0
@@ -257,7 +262,7 @@ class RemoteNode:
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                        ssock.settimeout(3)
+                        ssock.settimeout(1)
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             sender_id,
@@ -280,19 +285,18 @@ class RemoteNode:
 
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}")
-                return False, None
             except ConnectionError as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
-                tries += 1
-                time.sleep(0.2)
+                break
             except Exception as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+
+            if tries > 10:
+                break
+
+        return False, None
 
     def get_all_nodes(self) -> list["RemoteNode"] | None:
         tries: int = 0
@@ -304,7 +308,7 @@ class RemoteNode:
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                        ssock.settimeout(3)
+                        ssock.settimeout(2)
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             self.id,
@@ -327,20 +331,20 @@ class RemoteNode:
                         return []
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}")
-                return []
+                tries += 1
+                time.sleep(0.00002)
             except ConnectionError as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
-                tries += 1
-                time.sleep(0.2)
-
+                break
             except Exception as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+
+            if tries > 10:
+                break
+
+        return []
 
     def constains_key(self, key: int, sender_id: int) -> bool:
         tries: int = 0
@@ -353,7 +357,7 @@ class RemoteNode:
                 with socket.socket() as sock:
                     with context.wrap_socket(sock, server_hostname=self.ip) as ssock:
 
-                        ssock.settimeout(3)
+                        ssock.settimeout(1)
                         port = ssock.getsockname()[1]
                         request = RpcRequest(
                             sender_id,
@@ -380,19 +384,19 @@ class RemoteNode:
 
             except socket.timeout:
                 write_log(f"Timeout making request{request} to {self.ip}")
-                return False, None
+                break
             except ConnectionError as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
-                tries += 1
-                time.sleep(0.2)
+                break
             except Exception as e:
                 write_log(str(e))
-                if tries > 10:
-                    break
                 tries += 1
-                time.sleep(0.2)
+                time.sleep(0.00002)
+
+            if tries > 10:
+                break
+
+        return False
 
     def __eq__(self, other):
         return isinstance(other, RemoteNode) and self.id == other.id

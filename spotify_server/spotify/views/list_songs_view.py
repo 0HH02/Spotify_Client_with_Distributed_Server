@@ -1,3 +1,4 @@
+import time
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -29,6 +30,7 @@ class ListSongsMetadataView(APIView):
         Returns:
             Response: A Response object containing serialized song metadata and an HTTP 200 status code.
         """
+        i = time.time()
         write_log("Getting all", 2)
         distributed_interface = DistributedInterface()
         result, active_nodes = distributed_interface.get_all_songs()
@@ -38,6 +40,7 @@ class ListSongsMetadataView(APIView):
                 "data": {
                     "songs": [s.to_dict() for s in result],
                     "nodes": [n.to_dict() for n in active_nodes],
+                    "time": time.time() - i,
                 }
             },
             status=status.HTTP_200_OK,
