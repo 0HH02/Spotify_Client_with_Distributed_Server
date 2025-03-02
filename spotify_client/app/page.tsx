@@ -66,12 +66,13 @@ export default function Home() {
         )}`
       );
       console.log(response.data.data);
+      const base_server = server?.substring(0, server?.lastIndexOf("/"));
       const apiSongs = response.data.data.songs.map((song: Song) => ({
         title: song.title,
         artist: song.artist,
         genre: song.genre,
         album: song.album,
-        coverUrl: `${server}${song.image}`,
+        coverUrl: `${base_server}/${song.image}`,
         duration: song.duration,
         fileSize: song.size,
       }));

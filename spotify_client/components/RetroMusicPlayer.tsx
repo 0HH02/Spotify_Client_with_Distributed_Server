@@ -228,7 +228,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
       // 2. Si sí está bufferizado, aplicas la lógica que ya tenías de "descarga si me estoy quedando sin buffer"
       const bufferEnd =
         srcBuffer.buffered.length > 0 ? srcBuffer.buffered.end(0) : 0;
-      if (!isFetchingRef.current && bufferEnd - nowTime < 10) {
+      if (!isFetchingRef.current) {
         const lastChunkIndex =
           chunkListRef.current.length > 0
             ? chunkListRef.current[chunkListRef.current.length - 1].index
@@ -294,7 +294,7 @@ export const RetroMusicPlayer: React.FC<RetroMusicPlayerProps> = ({
           console.warn("No se pudo cargar el chunk, intentando de nuevo...");
           return await fetchAndAppendChunk(srcBuffer, chunkIndex, mediaSrc);
         }
-
+        console.log(chunkData)
         // Convierte y guarda el chunk en caché
         const newChunk = new Uint8Array(chunkData);
         cacheSongChunk(songId, chunkIndex, newChunk);
