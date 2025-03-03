@@ -5,7 +5,7 @@ from .remote_node import RemoteNode
 
 from ..logs import write_log
 
-K_BUCKET_SIZE = 3
+K_BUCKET_SIZE = 4
 
 
 class KBucket:
@@ -70,7 +70,7 @@ class FingerTable:
     def get_k_closets_nodes(self, key: int, k: int) -> list[RemoteNode]:
         closest_nodes: list[RemoteNode] = []
         distance_bit: int = self.get_bit_distance(key)
-        write_log(f"The distance bit between self and {key} is {distance_bit}")
+        write_log(f"The distance bit between self and {key} is {distance_bit}", 1)
 
         for remote_node in self.buckets[distance_bit].nodes:
             heappush(closest_nodes, (-(remote_node.id ^ key), remote_node))
@@ -94,7 +94,17 @@ class FingerTable:
                 previous_k_bucket -= 1
                 still_searching = True
 
-        return [heappop(closest_nodes)[1] for _ in range(min(k, len(closest_nodes)))]
+        result = []
+        write_log("Verifying closest nodes", 1)
+        while closest_nodes and len(result) < k:
+            current: RemoteNode = heappop(closest_nodes)[1]
+            write_log(f"Checking node {current}", 1)
+
+            if current.ping(self.node.id)[0]:
+                result.append(current)
+
+        write_log(f"Returning {result}", 1)
+        return result
 
     def add_node(self, remote_node: RemoteNode):
         distance_bit: int = self.get_bit_distance(remote_node.id)
